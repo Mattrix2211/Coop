@@ -52,7 +52,7 @@
             <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false"><span class="visually-hidden">Actions</span></button>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><a class="dropdown-item" href="{% url 'stock_movements_list' %}?product={{ p.id }}"><i class="bi bi-clock-history me-2"></i>Historique stock</a></li>
-              {% if request.user.is_superuser or request.user.groups.filter(name='Admin').exists %}
+              {% if user_is_admin %}
               <li><button class="dropdown-item adjust-stock-btn" data-bs-toggle="modal" data-bs-target="#adjustStockModal" data-id="{{ p.id }}" data-name="{{ p.name }}" data-qty="{{ p.quantity }}"><i class="bi bi-sliders me-2"></i>Ajuster stock</button></li>
               <li><button class="dropdown-item" data-bs-toggle="modal" data-bs-target="#prodEdit{{ p.id }}"><i class="bi bi-pencil me-2"></i>Modifier</button></li>
               <li><hr class="dropdown-divider"></li>

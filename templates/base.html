@@ -22,7 +22,6 @@
     </button>
     <div class="collapse navbar-collapse" id="nav">
       {% with u=request.resolver_match.url_name %}
-      {% with is_admin=request.user.is_superuser or request.user.groups.all|length > 0 %}
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
         <li class="nav-item"><a class="nav-link {% if u == 'dashboard' or u == 'home' %}active{% endif %}" href="{% url 'dashboard' %}">Tableau de bord</a></li>
         <li class="nav-item"><a class="nav-link {% if u == 'sale_create' %}active{% endif %}" href="{% url 'sale_create' %}">Vente</a></li>
@@ -36,7 +35,7 @@
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
             <i class="bi bi-person-circle me-1"></i>{{ request.user.get_full_name|default:request.user.username }}
-            {% if request.user.is_superuser or request.user.groups.filter(name='Admin').exists %}<span class="badge bg-secondary ms-1 small">Admin</span>{% endif %}
+            {% if user_is_admin %}<span class="badge bg-secondary ms-1 small">Admin</span>{% endif %}
           </a>
           <ul class="dropdown-menu dropdown-menu-end">
             {% if request.user.is_superuser %}<li><a class="dropdown-item" href="{% url 'admin:index' %}"><i class="bi bi-gear me-2"></i>Administration</a></li><li><hr class="dropdown-divider"></li>{% endif %}
@@ -47,7 +46,6 @@
         </li>
       </ul>
       {% endif %}
-      {% endwith %}
       {% endwith %}
     </div>
   </div>

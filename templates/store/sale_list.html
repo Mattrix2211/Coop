@@ -93,7 +93,7 @@
           {% if s.balance > 0 %}
             <button class="btn btn-sm btn-primary pay-open" data-id="{{ s.id }}" data-balance="{{ s.balance }}">Régulariser</button>
           {% endif %}
-          {% if request.user.is_superuser or request.user.groups.filter(name='Admin').exists %}
+          {% if user_is_admin %}
             <button type="button" class="btn btn-sm btn-outline-danger sale-delete-btn" data-id="{{ s.id }}" data-bs-toggle="modal" data-bs-target="#deleteSaleModal" title="Supprimer cette vente"><i class="bi bi-trash"></i></button>
           {% endif %}
         </td>
