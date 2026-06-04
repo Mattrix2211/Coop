@@ -2,7 +2,9 @@
 {% block title %}Historique des ventes - Coop{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-  <h2 class="m-0">Historique des ventes</h2>
+  <h2 class="m-0 d-flex align-items-center gap-2">Historique des ventes
+    <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpSalesModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
+  </h2>
   <div>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#chooseCustomerModal">
       Régler les dettes
@@ -126,6 +128,30 @@
   </ul>
 </nav>
 {% endif %}
+
+<!-- Modale aide historique -->
+<div class="modal fade" id="helpSalesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle me-2 text-primary"></i>Historique des ventes</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small">
+        <ul class="ps-3 mb-0">
+          <li class="mb-2"><strong>Détails</strong> — affiche le reçu complet de la vente avec le détail des articles et des paiements.</li>
+          <li class="mb-2"><strong>Régulariser</strong> — enregistre un paiement complémentaire sur une vente dont le solde est encore positif (dette partielle ou totale).</li>
+          <li class="mb-2"><strong>Régler les dettes</strong> — choisissez un client pour répartir un paiement global sur toutes ses ventes impayées, du plus ancien au plus récent.</li>
+          <li class="mb-2"><strong>Supprimer</strong> <em>(Admin)</em> — supprime une vente individuelle et remet automatiquement les articles en stock.</li>
+          <li><strong>Vider l'historique</strong> <em>(Admin)</em> — supprime toutes les ventes. Action irréversible, les stocks ne sont pas remis à jour automatiquement.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Modal suppression d'une vente (admin) -->
 <div class="modal fade" id="deleteSaleModal" tabindex="-1" aria-hidden="true">

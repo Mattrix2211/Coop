@@ -4,8 +4,39 @@
 {% block title %}Vente - Coop{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="m-0">Vente</h2>
- </div>
+  <h2 class="m-0 d-flex align-items-center gap-2">Vente
+    <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
+  </h2>
+</div>
+
+<!-- Modale aide kiosk -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle me-2 text-primary"></i>Comment faire une vente ?</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small">
+        <ol class="ps-3 mb-0">
+          <li class="mb-2"><strong>Sélectionnez les produits</strong> — cliquez sur les articles dans la grille pour les ajouter au panier. Utilisez la barre de recherche ou les filtres par catégorie pour trouver rapidement un article.</li>
+          <li class="mb-2"><strong>Choisissez un client</strong> — obligatoire pour valider. Commencez à taper le nom dans le champ client.</li>
+          <li class="mb-2"><strong>Choisissez le paiement</strong> —
+            <ul class="mt-1">
+              <li><em>Espèces</em> : cliquez sur les billets/pièces remis. Le rendu monnaie est calculé automatiquement.</li>
+              <li><em>Chèque / Autre</em> : saisissez le montant encaissé.</li>
+              <li><em>À crédit</em> : laissez le montant à 0. La vente sera enregistrée comme dette.</li>
+            </ul>
+          </li>
+          <li><strong>Validez</strong> — cliquez sur « Valider la vente ». Le reçu s'affiche et le stock est mis à jour automatiquement.</li>
+        </ol>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="row g-3">
   <div class="col-lg-7 col-xl-6">

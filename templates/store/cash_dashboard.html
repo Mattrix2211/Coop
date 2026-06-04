@@ -2,7 +2,33 @@
 {% load static %}
 {% block title %}Caisse - Coop{% endblock %}
 {% block content %}
-<h2 class="mb-3">Caisse</h2>
+<h2 class="mb-3 d-flex align-items-center gap-2">Caisse
+  <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpCaisseModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
+</h2>
+
+<!-- Modale aide caisse -->
+<div class="modal fade" id="helpCaisseModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle me-2 text-primary"></i>Gestion de la caisse</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small">
+        <ul class="ps-3 mb-0">
+          <li class="mb-2"><strong>Initialiser / Réinitialiser</strong> — à faire en début de journée. Saisissez le fond de caisse présent (billets et pièces). Cela crée une nouvelle session et archive l'ancienne.</li>
+          <li class="mb-2"><strong>Remise</strong> — enregistrez un retrait d'espèces (versement en banque, mise en coffre…). Sélectionnez les billets/pièces retirés.</li>
+          <li class="mb-2"><strong>Espèces courantes</strong> — détail en temps réel de ce qui est en caisse, mis à jour à chaque vente et remise.</li>
+          <li class="mb-2"><strong>Chèques</strong> — total des paiements par chèque sur la session en cours.</li>
+          <li><strong>Exporter mouvements</strong> — télécharge l'historique complet de la session au format Excel.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% if not has_session %}
   <div class="alert alert-info">Aucune session de caisse active. <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#cashResetModal">Initialiser maintenant</button>.</div>
 {% else %}

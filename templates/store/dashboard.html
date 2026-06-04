@@ -2,7 +2,9 @@
 {% block title %}Tableau de bord - Coop{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-  <h2 class="mb-0">Tableau de bord</h2>
+  <h2 class="mb-0 d-flex align-items-center gap-2">Tableau de bord
+    <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpDashModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
+  </h2>
   <div class="d-flex align-items-center gap-2">
     <div class="btn-group" role="group" aria-label="Période">
       <a href="?p=day" class="btn btn-sm btn-outline-primary {% if period == 'day' %}active{% endif %}">Jour</a>
@@ -12,6 +14,31 @@
     </div>
   </div>
   <small class="text-muted w-100">Période: {{ period_label }}</small>
+</div>
+
+<!-- Modale aide tableau de bord -->
+<div class="modal fade" id="helpDashModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle me-2 text-primary"></i>Tableau de bord</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small">
+        <ul class="ps-3 mb-0">
+          <li class="mb-2"><strong>Période</strong> — choisissez Jour, Semaine, Mois, Année ou une plage personnalisée. Tous les chiffres et graphiques se synchronisent sur la période sélectionnée.</li>
+          <li class="mb-2"><strong>Chiffre d'affaires</strong> — total des ventes sur la période (hors déductions). Le panier moyen est le CA divisé par le nombre de ventes.</li>
+          <li class="mb-2"><strong>Dettes totales</strong> — cumul des soldes impayés sur toutes les ventes, toutes périodes confondues.</li>
+          <li class="mb-2"><strong>Stock bas</strong> — produits dont la quantité est inférieure ou égale au seuil d'alerte défini dans le catalogue.</li>
+          <li class="mb-2"><strong>Top produits</strong> — classement par quantité vendue sur la période.</li>
+          <li><strong>Top clients</strong> — classement par chiffre d'affaires généré sur la période.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="row g-3 mb-4">

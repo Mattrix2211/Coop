@@ -4,7 +4,9 @@
 {% block title %}Produits - Coop{% endblock %}
 {% block content %}
 <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-nowrap">
-  <h2 class="m-0">Catalogue</h2>
+  <h2 class="m-0 d-flex align-items-center gap-2">Catalogue
+    <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpCatalogueModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
+  </h2>
   <div class="d-flex align-items-center gap-2 flex-nowrap">
     <input id="catalogSearch" class="form-control" type="text" placeholder="Rechercher par nom ou catégorie..." style="width: 280px;">
     <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#prodNew"><i class="bi bi-plus-circle me-1"></i> Produit</button>
@@ -214,6 +216,31 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
         <button type="button" class="btn btn-danger" id="catDeleteConfirm"><i class="bi bi-trash me-1"></i> Supprimer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modale aide catalogue -->
+<div class="modal fade" id="helpCatalogueModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-info-circle me-2 text-primary"></i>Gestion du catalogue</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body small">
+        <ul class="ps-3 mb-0">
+          <li class="mb-2"><strong>+ Stock</strong> — ajoute une quantité positive au stock d'un produit (réassort). Un mouvement de stock est enregistré automatiquement.</li>
+          <li class="mb-2"><strong>Ajuster stock</strong> <em>(Admin)</em> — corrige le stock avec un delta positif ou négatif (inventaire, perte, erreur de saisie). Nécessite une note explicative.</li>
+          <li class="mb-2"><strong>Stock bas</strong> — le badge rouge <span class="badge text-bg-danger">Bas</span> s'affiche quand la quantité est inférieure ou égale au seuil d'alerte du produit.</li>
+          <li class="mb-2"><strong>Historique stock</strong> — consultez tous les mouvements (ventes, réassorts, ajustements) pour un produit donné.</li>
+          <li class="mb-2"><strong>Catégories</strong> <em>(Admin)</em> — regroupez les produits par rayon pour faciliter la navigation au kiosk.</li>
+          <li><strong>Exporter</strong> — télécharge le catalogue complet au format Excel.</li>
+        </ul>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Fermer</button>
       </div>
     </div>
   </div>
