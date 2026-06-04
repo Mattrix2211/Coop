@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Clients - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Clients</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newCustomer">Nouveau client</button>
+</div>
+<div class="row">
+  <div class="col-lg-8 col-xl-6 mx-auto">
+    <div class="table-responsive border rounded-3 overflow-hidden shadow-sm">
+      <table class="table table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in customers %}
+          <tr>
+            <td>
+              <a href="{% url 'customer_detail' c.pk %}" class="fw-semibold text-decoration-none">{{ c.first_name }} {{ c.last_name }}</a>
+            </td>
+            <td class="text-end d-flex gap-1 justify-content-end">
+              <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editCustomer{{ c.id }}">Modifier</button>
+              <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#delCustomer{{ c.id }}"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+          <div class="modal fade" id="delCustomer{{ c.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+              <div class="modal-content">
+                <div class="modal-header border-0"><h6 class="modal-title text-danger">Supprimer {{ c.first_name }} {{ c.last_name }} ?</h6><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body small text-muted">Les ventes seront conservées.</div>
+                <div class="modal-footer">
+                  <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                  <form method="post" action="{% url 'customer_delete' c.pk %}">{% csrf_token %}<button class="btn btn-sm btn-danger">Supprimer</button></form>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal fade" id="editCustomer{{ c.id }}" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Modifier client</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <form method="post" action="{% url 'customer_update' c.id %}">
+                  {% csrf_token %}
+                  <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">Prénom</label><input class="form-control" name="first_name" value="{{ c.first_name }}" required></div>
+                    <div class="mb-3"><label class="form-label">Nom</label><input class="form-control" name="last_name" value="{{ c.last_name }}" required></div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-primary" type="submit">Enregistrer</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% empty %}
+          <tr><td colspan="3" class="text-center text-muted">Aucun client</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="newCustomer" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Nouveau client</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'customer_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Prénom</label><input class="form-control" name="first_name" required></div>
+          <div class="mb-3"><label class="form-label">Nom</label><input class="form-control" name="last_name" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-primary" type="submit">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

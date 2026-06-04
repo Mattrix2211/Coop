@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Dettes - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Dettes</h2>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'export_debts_xlsx' %}">Exporter (ventes)</a>
+    <a class="btn btn-outline-secondary" href="{% url 'export_debtors_xlsx' %}">Exporter clients endettés</a>
+  </div>
+</div>
+<div class="table-responsive border rounded-3 overflow-hidden shadow-sm">
+<table class="table table-striped align-middle mb-0">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Date</th>
+      <th>Client</th>
+      <th>Total</th>
+      <th>Payé</th>
+      <th>Solde</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sales %}
+      <tr>
+        <td>{{ s.id }}</td>
+  <td>{{ s.created_at|date:'d/m/Y H:i' }}</td>
+        <td>{% if s.customer %}{{ s.customer }}{% else %}<span class="text-muted">(aucun)</span>{% endif %}</td>
+        <td>{{ s.total|floatformat:2 }} €</td>
+        <td>{{ s.amount_paid|floatformat:2 }} €</td>
+        <td class="text-danger">{{ s.balance|floatformat:2 }} €</td>
+        <td>
+          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#pay{{ s.id }}">Régler</button>
+          <div class="modal fade" id="pay{{ s.id }}" tabindex="-1">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Régler la dette — Vente #{{ s.id }}</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <form method="post" action="{% url 'add_payment' s.id %}">
+                  {% csrf_token %}
+                  <div class="modal-body">
+                    <p>Total {{ s.total|floatformat:2 }} €, Payé {{ s.amount_paid|floatformat:2 }} €, Solde {{ s.balance|floatformat:2 }} €</p>
+                    <div class="mb-3">
+                      <label class="form-label">Montant</label>
+                      <input class="form-control" type="number" name="amount" step="0.01" min="0" value="{{ s.balance }}">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Méthode</label>
+                      <select class="form-select" name="method">
+                        {% for k, label in s.payments.model.METHOD_CHOICES %}
+                          <option value="{{ k }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button class="btn btn-primary" type="submit">Valider</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-center">Aucune dette</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <th colspan="5" class="text-end">Total dettes</th>
+      <th colspan="2" class="text-danger">{{ total_debt|floatformat:2 }} €</th>
+    </tr>
+  </tfoot>
+</table>
+</div>
+{% endblock %}

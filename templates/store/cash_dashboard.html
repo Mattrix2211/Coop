@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Caisse - Coop{% endblock %}
+{% block content %}
+<h2 class="mb-3">Caisse</h2>
+{% if not has_session %}
+  <div class="alert alert-info">Aucune session de caisse active. <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#cashResetModal">Initialiser maintenant</button>.</div>
+{% else %}
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#cashResetModal">Réinitialiser</button>
+    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cashDropModal">Remise</button>
+    <a href="{% url 'export_cash_movements_xlsx' %}" class="btn btn-sm btn-outline-success">Exporter mouvements</a>
+  </div>
+  <div class="row g-3 mb-3">
+    <div class="col-lg-6">
+      <div class="card p-3 h-100">
+        <h5 class="mb-2">Espèces courantes</h5>
+        <div class="row g-2">
+          <div class="col-6">
+              <div class="small fw-semibold mb-1">Billets</div>
+              <ul class="list-unstyled small mb-2 d-flex flex-wrap gap-2">
+                {% for b in bills_current %}
+                  <li class="m-0 p-0">
+                    <span class="denom-stack">
+                      {% if b.img %}<img src="{% static b.img %}" alt="{{ b.denom }}€" />{% else %}<span class="denom-label">{{ b.denom }} €</span>{% endif %}
+                      <span class="badge">{{ b.qty }}</span>
+                    </span>
+                  </li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+          </div>
+          <div class="col-6">
+              <div class="small fw-semibold mb-1">Pièces</div>
+              <ul class="list-unstyled small mb-2 d-flex flex-wrap gap-2">
+                {% for c in coins_current %}
+                  <li class="m-0 p-0">
+                    <span class="denom-stack coin">
+                      {% if c.img %}<img src="{% static c.img %}" alt="{{ c.denom }}€" />{% else %}<span class="denom-label">{{ c.denom }} €</span>{% endif %}
+                      <span class="badge">{{ c.qty }}</span>
+                    </span>
+                  </li>
+                {% empty %}<li class="text-muted">—</li>{% endfor %}
+              </ul>
+          </div>
+        </div>
+        <div class="fw-bold">Total espèces: {{ cash_total_current|floatformat:2 }} €</div>
+        <div class="small">Chèques (nombre): {{ cheques_count_current }}</div>
+        <div class="small">Total chèques encaissés: {{ cheque_total|floatformat:2 }} €</div>
+        <hr />
+        <div class="global-total-display fw-bold">Total global: {{ global_total|floatformat:2 }} €</div>
+      </div>
+    </div>
+    <!-- Carte info supprimée -->
+    <div class="col-lg-4">
+      <div class="card p-3 h-100">
+        <h5 class="mb-2">Mouvements récents</h5>
+        <div class="table-responsive" style="max-height:330px; overflow:auto;">
+          <table class="table table-sm align-middle mb-0">
+            <thead><tr><th>Date</th><th>Type</th><th class="text-end">Montant</th></tr></thead>
+            <tbody>
+              {% for m in recent_movements %}
+                <tr>
+                  <td class="small">{{ m.created_at|date:'d/m H:i' }}</td>
+                  <td class="small">{{ m.get_movement_type_display }}</td>
+                  <td class="text-end small">{{ m.amount|floatformat:2 }} €</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="3" class="text-center small">Aucun mouvement</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<!-- Modale: Réinitialiser fond de caisse -->
+<div class="modal fade" id="cashResetModal" tabindex="-1" aria-labelledby="cashResetLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'cash_reset' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="cashResetLabel">Fond de caisse</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="small text-muted mb-2">Cliquer sur les billets/pièces pour constituer le fond.</div>
+          <div id="resetDenomButtons" class="d-flex flex-wrap gap-2 mb-2">
+            {% for entry in denom_entries %}
+              <button type="button" class="btn btn-outline-secondary btn-sm reset-denom-btn denom-btn {{ entry.type }}" data-denom="{{ entry.value }}" data-safe="{{ entry.safe }}" title="{{ entry.value }} €">
+                <span class="denom-icon {{ entry.type }}"></span>
+                <span class="denom-label">{{ entry.value }} €</span>
+                <span class="badge bg-primary ms-1 denom-count">0</span>
+              </button>
+              <input type="hidden" name="denom_{{ entry.safe }}" value="0" />
+            {% endfor %}
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button type="button" id="resetFondClear" class="btn btn-sm btn-warning">Réinitialiser</button>
+            <button type="button" id="resetFondUndo" class="btn btn-sm btn-secondary">Annuler dernier</button>
+          </div>
+          <div class="small mb-2 fw-semibold" id="resetFondTotal">Total espèces fond: 0,00 €</div>
+          <label class="form-label small">Nombre de chèques présents</label>
+          <input type="number" min="0" name="cheques_count" class="form-control form-control-sm" value="0" />
+          <div class="mt-3">
+            <button class="btn btn-success w-100 py-2" type="submit">
+              <i class="bi bi-check2-circle me-1"></i> Valider le fond
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Fermer</button>
+          <small class="text-muted">Le fond est créé immédiatement après validation.</small>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modale: Remise de caisse -->
+<div class="modal fade" id="cashDropModal" tabindex="-1" aria-labelledby="cashDropLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <form method="post" action="{% url 'cash_drop' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="cashDropLabel">Remise de caisse</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="small text-muted mb-2">Cliquer sur les billets/pièces retirés.</div>
+          <div id="dropDenomButtons" class="d-flex flex-wrap gap-2 mb-2">
+            {% for entry in denom_entries %}
+              <button type="button" class="btn btn-outline-danger btn-sm drop-denom-btn denom-btn {{ entry.type }}" data-denom="{{ entry.value }}" data-safe="{{ entry.safe }}" title="{{ entry.value }} €">
+                <span class="denom-icon {{ entry.type }}"></span>
+                <span class="denom-label">{{ entry.value }} €</span>
+                <span class="badge bg-danger ms-1 denom-count">0</span>
+              </button>
+              <input type="hidden" name="denom_{{ entry.safe }}" value="0" />
+            {% endfor %}
+          </div>
+          <div class="d-flex flex-wrap gap-2 mb-2">
+            <button type="button" id="dropClear" class="btn btn-sm btn-warning">Réinitialiser</button>
+            <button type="button" id="dropUndo" class="btn btn-sm btn-secondary">Annuler dernier</button>
+          </div>
+          <div class="small mb-2" id="dropTotal">Total retiré: 0,00 €</div>
+          <label class="form-label small mt-3">Note</label>
+          <textarea name="note" rows="3" class="form-control" placeholder="Motif de la remise..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger">Enregistrer la remise</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+// Fond de caisse interactive
+(function(){
+  const container = document.getElementById('resetDenomButtons');
+  if(!container) return;
+  let history = [];
+  function recalc(){
+    let total = 0;
+    container.querySelectorAll('input[name^="denom_"]').forEach(inp=>{
+      const name = inp.name.replace('denom_','');
+      const denom = parseFloat(name.replace('_','.'));
+      const qty = parseInt(inp.value||'0',10)||0;
+      if(!isNaN(denom) && qty>0) total += denom*qty;
+    });
+    const out = document.getElementById('resetFondTotal');
+    if(out){ out.textContent = 'Total espèces fond: ' + (Math.round(total*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  }
+  container.addEventListener('click', e=>{
+    const btn = e.target.closest('.reset-denom-btn'); if(!btn) return;
+    const safe = btn.getAttribute('data-safe');
+    const hidden = container.querySelector(`input[name="denom_${safe}"]`);
+    if(!hidden) return;
+    hidden.value = (parseInt(hidden.value||'0',10)||0) + 1;
+    btn.querySelector('.denom-count').textContent = hidden.value;
+    history.push(safe);
+    recalc();
+  });
+  document.getElementById('resetFondClear')?.addEventListener('click', ()=>{
+    container.querySelectorAll('input[name^="denom_"]').forEach(inp=>inp.value='0');
+    container.querySelectorAll('.reset-denom-btn .denom-count').forEach(c=>c.textContent='0');
+    history=[]; recalc();
+  });
+  document.getElementById('resetFondUndo')?.addEventListener('click', ()=>{
+    const last = history.pop(); if(!last) return;
+    const inp = container.querySelector(`input[name="denom_${last}"]`);
+    const badge = container.querySelector(`.reset-denom-btn[data-safe="${last}"] .denom-count`);
+    if(inp){ const v=(parseInt(inp.value||'0',10)||0)-1; inp.value = v>0? v:0; }
+    if(badge){ badge.textContent = inp.value; }
+    recalc();
+  });
+})();
+
+// Remise de caisse interactive
+(function(){
+  const container = document.getElementById('dropDenomButtons');
+  if(!container) return;
+  let history = [];
+  function recalc(){
+    let total = 0;
+    container.querySelectorAll('input[name^="denom_"]').forEach(inp=>{
+      const name = inp.name.replace('denom_','');
+      const denom = parseFloat(name.replace('_','.'));
+      const qty = parseInt(inp.value||'0',10)||0;
+      if(!isNaN(denom) && qty>0) total += denom*qty;
+    });
+    const out = document.getElementById('dropTotal');
+    if(out){ out.textContent = 'Total retiré: ' + (Math.round(total*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  }
+  container.addEventListener('click', e=>{
+    const btn = e.target.closest('.drop-denom-btn'); if(!btn) return;
+    const safe = btn.getAttribute('data-safe');
+    const hidden = container.querySelector(`input[name="denom_${safe}"]`);
+    if(!hidden) return;
+    hidden.value = (parseInt(hidden.value||'0',10)||0) + 1;
+    btn.querySelector('.denom-count').textContent = hidden.value;
+    history.push(safe);
+    recalc();
+  });
+  document.getElementById('dropClear')?.addEventListener('click', ()=>{
+    container.querySelectorAll('input[name^="denom_"]').forEach(inp=>inp.value='0');
+    container.querySelectorAll('.drop-denom-btn .denom-count').forEach(c=>c.textContent='0');
+    history=[]; recalc();
+  });
+  document.getElementById('dropUndo')?.addEventListener('click', ()=>{
+    const last = history.pop(); if(!last) return;
+    const inp = container.querySelector(`input[name="denom_${last}"]`);
+    const badge = container.querySelector(`.drop-denom-btn[data-safe="${last}"] .denom-count`);
+    if(inp){ const v=(parseInt(inp.value||'0',10)||0)-1; inp.value = v>0? v:0; }
+    if(badge){ badge.textContent = inp.value; }
+    recalc();
+  });
+})();
+</script>
+{% endblock %}

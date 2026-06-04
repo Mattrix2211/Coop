@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+{% block title %}{{ customer }} - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <a href="{% url 'customer_list' %}" class="text-muted small">← Clients</a>
+    <h2 class="m-0 mt-1">{{ customer }}</h2>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editCustomerModal">
+      <i class="bi bi-pencil me-1"></i>Modifier
+    </button>
+    {% if total_debt > 0 %}
+      <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#bulkPayModal">
+        <i class="bi bi-cash me-1"></i>Régler dettes — {{ total_debt|floatformat:2 }} €
+      </button>
+    {% endif %}
+    <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteCustomerModal">
+      <i class="bi bi-trash me-1"></i>Supprimer
+    </button>
+  </div>
+</div>
+
+<!-- Cartes résumé -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div class="fw-bold fs-4">{{ sales|length }}</div>
+      <div class="text-muted small">Achats</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div class="fw-bold fs-4">{{ total_purchased|floatformat:2 }} €</div>
+      <div class="text-muted small">Total acheté</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3">
+      <div class="fw-bold fs-4">{{ total_paid|floatformat:2 }} €</div>
+      <div class="text-muted small">Total payé</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center p-3 {% if total_debt > 0 %}border-danger{% endif %}">
+      <div class="fw-bold fs-4 {% if total_debt > 0 %}text-danger{% endif %}">{{ total_debt|floatformat:2 }} €</div>
+      <div class="text-muted small">Dette</div>
+    </div>
+  </div>
+</div>
+
+<!-- Historique des ventes -->
+<h5 class="mb-2">Historique des achats</h5>
+<div class="table-responsive border rounded-3 overflow-hidden shadow-sm">
+  <table class="table table-striped align-middle mb-0">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Articles</th>
+        <th>Total</th>
+        <th>Payé</th>
+        <th>Solde</th>
+        <th>Statut</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in sales %}
+      <tr>
+        <td class="text-muted small">{{ s.id }}</td>
+        <td>{{ s.created_at|date:'d/m/Y H:i' }}</td>
+        <td class="small">
+          {% for item in s.items.all %}
+            {{ item.product.name }} ×{{ item.quantity }}{% if not forloop.last %}, {% endif %}
+          {% empty %}<span class="text-muted">—</span>{% endfor %}
+        </td>
+        <td>{{ s.total|floatformat:2 }} €</td>
+        <td>{{ s.amount_paid|floatformat:2 }} €</td>
+        <td class="{% if s.balance > 0 %}text-danger{% endif %}">{{ s.balance|floatformat:2 }} €</td>
+        <td>
+          {% if s.balance > 0 %}
+            <span class="badge bg-warning text-dark">Non payé</span>
+          {% else %}
+            <span class="badge bg-success">Payé</span>
+          {% endif %}
+        </td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-secondary receipt-open"
+            data-bs-toggle="modal" data-bs-target="#receiptModal" data-id="{{ s.id }}">Reçu</button>
+          {% if s.balance > 0 %}
+            <button class="btn btn-sm btn-primary pay-open" data-id="{{ s.id }}" data-balance="{{ s.balance }}">Régler</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="8" class="text-center text-muted">Aucun achat</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal supprimer client -->
+<div class="modal fade" id="deleteCustomerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Supprimer le client</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous vraiment supprimer <strong>{{ customer }}</strong> ?</p>
+        <p class="text-muted small">Ses ventes et paiements seront conservés mais n'auront plus de client associé.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <form method="post" action="{% url 'customer_delete' customer.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">Supprimer définitivement</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal modifier client -->
+<div class="modal fade" id="editCustomerModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Modifier le client</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form method="post" action="{% url 'customer_update' customer.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3"><label class="form-label">Prénom</label><input class="form-control" name="first_name" value="{{ customer.first_name }}" required></div>
+          <div class="mb-3"><label class="form-label">Nom</label><input class="form-control" name="last_name" value="{{ customer.last_name }}" required></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal paiement groupé -->
+<div class="modal fade" id="bulkPayModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Régler les dettes de {{ customer }}</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="bulkPayForm" method="post" action="{% url 'bulk_settle_customer' customer.pk %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div id="bulkSummary" class="mb-3 small text-muted">Chargement…</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Montant</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="amount" value="{{ total_debt|floatformat:2 }}" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Méthode</label>
+              <select class="form-select" name="method">
+                {% for v,lbl in methods %}<option value="{{ v }}">{{ lbl }}</option>{% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-success" type="submit">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal reçu -->
+<div class="modal fade" id="receiptModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2"><h5 class="modal-title">Reçu</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body" id="receiptBody"><div class="text-muted small">Chargement…</div></div>
+      <div class="modal-footer py-2"><button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal paiement individuel -->
+<div class="modal fade" id="payModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Régler le paiement</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="payForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-2">Solde : <strong id="payBalance">0,00 €</strong></div>
+          <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Montant</label><input class="form-control" type="number" step="0.01" min="0" name="amount" required></div>
+            <div class="col-md-6"><label class="form-label">Méthode</label>
+              <select class="form-select" name="method">{% for v,lbl in methods %}<option value="{{ v }}">{{ lbl }}</option>{% endfor %}</select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-success" type="submit">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // Reçu
+  const receiptModal = document.getElementById('receiptModal');
+  const receiptBody = document.getElementById('receiptBody');
+  if(receiptModal) {
+    receiptModal.addEventListener('show.bs.modal', async (ev) => {
+      const id = ev.relatedTarget?.getAttribute('data-id');
+      if(!id) return;
+      receiptBody.innerHTML = '<div class="text-muted small">Chargement…</div>';
+      const url = `{% url 'sale_receipt_fragment' 0 %}`.replace('/0/', `/${id}/`);
+      receiptBody.innerHTML = await fetch(url).then(r=>r.text()).catch(()=>'<div class="text-danger small">Erreur</div>');
+    });
+  }
+  // Paiement individuel
+  const payModal = document.getElementById('payModal');
+  const payForm = document.getElementById('payForm');
+  if(payModal) {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('.pay-open'); if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      const balance = parseFloat(btn.getAttribute('data-balance')||'0');
+      document.getElementById('payBalance').textContent = balance.toFixed(2).replace('.', ',') + ' €';
+      payForm.action = `{% url 'add_payment' 0 %}`.replace('/0/', `/${id}/`);
+      new bootstrap.Modal(payModal).show();
+    });
+  }
+  // Chargement résumé dette dans modale règlement groupé
+  const bulkModal = document.getElementById('bulkPayModal');
+  const bulkSummary = document.getElementById('bulkSummary');
+  if(bulkModal) {
+    bulkModal.addEventListener('show.bs.modal', () => {
+      fetch(`{% url 'bulk_settle_customer' customer.pk %}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r=>r.text()).then(html=>{ bulkSummary.innerHTML = html; })
+        .catch(()=>{ bulkSummary.innerHTML = ''; });
+    });
+    document.getElementById('bulkPayForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const res = await fetch(e.target.action, { method:'POST', headers:{'X-Requested-With':'XMLHttpRequest'}, body:fd, credentials:'same-origin' });
+      if(res.ok){ window.location.reload(); }
+    });
+  }
+})();
+</script>
+{% endblock %}

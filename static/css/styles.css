@@ -1,0 +1,319 @@
+/* App High-Tech Theme Enhancements */
+
+:root {
+  --accent: #00e5ff; /* cyan neon */
+  --accent-2: #7c4dff; /* purple */
+  --glow: rgba(0, 229, 255, 0.35);
+}
+
+[data-bs-theme="dark"] {
+  --accent: #00e5ff;
+  --accent-2: #7c4dff;
+  --glow: rgba(0, 229, 255, 0.35);
+}
+
+/* Animated gradient background */
+body {
+  background: radial-gradient(1200px 600px at 10% -20%, rgba(124,77,255,0.10), transparent),
+              radial-gradient(1000px 500px at 110% 20%, rgba(0,229,255,0.10), transparent),
+              linear-gradient(180deg, rgba(0,0,0,0.00), rgba(0,0,0,0.00));
+  background-attachment: fixed;
+  animation: bgShift 18s ease-in-out infinite alternate;
+  padding-top: 96px; /* espace sous navbar fixe (desktop) */
+}
+
+html { scroll-padding-top: 96px; }
+
+/* Ajuster l'espace et l'ancrage sur mobiles */
+@media (max-width: 576px){
+  body { padding-top: 84px; }
+  html { scroll-padding-top: 84px; }
+}
+
+@keyframes bgShift {
+  0% { background-position: 0 0, 100% 0, 0 0; }
+  100% { background-position: 10% 5%, 95% 15%, 0 0; }
+}
+
+/* Navbar gradient + glow */
+.navbar {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  box-shadow: 0 6px 24px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  z-index: 1100; /* au-dessus du contenu animé */
+}
+
+.navbar { min-height: 72px; }
+.navbar .nav-link, .navbar .navbar-brand { text-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+.navbar .nav-link:hover { filter: brightness(1.08); }
+.navbar-brand img.app-logo { height: 50px !important; max-height: 50px; width: auto; display: inline-block; }
+@media (max-width: 576px){
+  .navbar-brand img.app-logo { height: 40px !important; max-height: 40px; }
+}
+.navbar .navbar-brand span{ font-size: 1.1rem; }
+
+/* Un léger espace sous la navbar pour dégager le haut visuel du contenu */
+.container{ padding-top: 6px; }
+
+/* Éviter que les ancres soient masquées sous la navbar fixe */
+:target { scroll-margin-top: 96px; }
+@media (max-width: 576px){
+  :target { scroll-margin-top: 84px; }
+}
+
+/* Cards: glassmorphism + hover lift */
+.card {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: saturate(140%) blur(6px);
+  -webkit-backdrop-filter: saturate(140%) blur(6px);
+  border: 1px solid rgba(255,255,255,0.35) !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.12), 0 1px 0 rgba(255,255,255,0.5) inset;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+[data-bs-theme="dark"] .card {
+  background: rgba(18,18,24,0.55);
+  border-color: rgba(255,255,255,0.08) !important;
+  box-shadow: 0 12px 34px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.03) inset;
+}
+.card:hover {
+  /* Préférence: pas d'effet de survol prononcé */
+  transform: none;
+}
+
+/* Buttons: subtle neon gradient + hover */
+.btn:not(.btn-link) {
+  position: relative;
+  transition: transform .12s ease, box-shadow .2s ease, filter .2s ease;
+}
+.btn-primary, .btn-success, .btn-danger, .btn-warning, .btn-dark {
+  background-image: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(0,0,0,0.04));
+}
+.btn:hover:not(.btn-link) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.12), 0 0 0 2px rgba(255,255,255,0.06) inset;
+}
+.btn:active:not(.btn-link) { transform: translateY(0); filter: brightness(.98); }
+
+/* Inputs: subtle focus (no neon) */
+.form-control, .form-select { transition: box-shadow .2s ease, border-color .2s ease; }
+.form-control:focus, .form-select:focus {
+  border-color: var(--bs-border-color) !important;
+  box-shadow: 0 0 0 .1rem rgba(0,0,0,0.06) !important; /* trait plus fin et plus léger */
+}
+
+/* Toasts: enhanced elevation */
+.toast { box-shadow: 0 14px 40px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.06) inset; }
+
+/* Icons: no neon hover anywhere (global off) */
+.fas, .far, .fa { transition: none; }
+.fas:hover, .far:hover, .fa:hover { text-shadow: none !important; filter: none !important; }
+/* Désactiver tout effet néon dans la navbar (hover/click) */
+.navbar .fas:hover, .navbar .far:hover, .navbar .fa:hover,
+.navbar .fas:active, .navbar .far:active, .navbar .fa:active {
+  text-shadow: none !important;
+  filter: none !important;
+}
+.navbar .nav-link:hover, .navbar .nav-link:active { filter: none !important; text-shadow: none !important; }
+
+/* Désactiver le néon sur les icônes d'information */
+.fa-info-circle, .fa-info, .fa-circle-info { text-shadow: none !important; filter: none !important; }
+.fa-info-circle:hover, .fa-info:hover, .fa-circle-info:hover { text-shadow: none !important; filter: none !important; }
+
+/* Input groups: remove any focus glow */
+.input-group:focus-within { box-shadow: none !important; }
+.input-group .input-group-text, .input-group .input-group-text i { text-shadow: none !important; filter: none !important; }
+
+/* Present counter gentle pulse */
+.present-counter { text-shadow: 0 0 12px rgba(40,167,69,0.35); animation: softPulse 3.2s ease-in-out infinite; }
+@keyframes softPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+/* (Retiré) animation de container qui créait un stacking context et gênait les dropdowns */
+
+/* Tables: header shine */
+thead.table-primary { background: linear-gradient(90deg, rgba(124,77,255,0.15), rgba(0,229,255,0.15)) !important; }
+/* --- Kiosk (borne) Vente --- */
+.product-grid.kiosk, .product-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+/* Forcer 3 colonnes de produits en mode kiosque sur écrans moyens/grands */
+.product-grid.kiosk { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 992px){
+  .product-grid.kiosk { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 576px){
+  .product-grid.kiosk { grid-template-columns: repeat(1, 1fr); }
+}
+.product-card.kiosk-card, .product-card {
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.75);
+  -webkit-backdrop-filter: saturate(140%) blur(4px);
+  backdrop-filter: saturate(140%) blur(4px);
+  overflow: hidden;
+  padding: 10px;
+  text-align: center;
+  transition: transform .12s ease, box-shadow .2s ease;
+}
+[data-bs-theme="dark"] .product-card {
+  background: rgba(22,22,28,0.55);
+  border-color: rgba(255,255,255,0.08);
+}
+.product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; }
+.product-card .pname { margin-top: 6px; font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-card .pprice { color: #0d6efd; font-weight: 700; }
+.product-card:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.12); }
+
+/* Catégories bar */
+#catBar .btn { border-radius: 999px; }
+#catBar .btn.active { color: #fff; background-color: #0d6efd; border-color: #0d6efd; }
+
+/* Panier kiosk */
+.kiosk-cart .btn.btn-lg { min-width: 46px; }
+.kiosk-cart .btn.btn-sm { min-width: 36px; padding: .25rem .5rem; }
+.kiosk-cart input[type="number"], .kiosk-cart input[type="text"] {
+  height: calc(1.5em + .6rem + 2px);
+  font-size: 1rem;
+}
+.kiosk-cart .prod-cell { min-width: 0; }
+.kiosk-cart .prod-cell select { width: 200px; max-width: 100%; }
+.kiosk-cart input[name$="-unit_price"]{
+  background-color: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  pointer-events: none;
+  padding-left: 0; padding-right: 0;
+}
+/* Hide number input spinners for readonly unit price */
+input.no-spin::-webkit-outer-spin-button,
+input.no-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+input.no-spin{ -moz-appearance: textfield; appearance: textfield; }
+.kiosk-cart th.sticky-end, .kiosk-cart td.sticky-end {
+  position: sticky; right: 0; z-index: 2;
+  background: var(--bs-body-bg, #fff);
+}
+.kiosk-cart .cart-del { min-width: 48px; }
+
+/* Totaux kiosk */
+.kiosk-totals .display-6 { line-height: 1; }
+
+
+/* Heatmap canvas anti-blur border removal (safety) */
+canvas { image-rendering: -webkit-optimize-contrast; }
+
+/* Theme toggle hover */
+#themeToggle:hover { box-shadow: none; }
+
+/* Dropdown menu styling */
+.dropdown-menu { border-radius: 12px; border-color: rgba(255,255,255,0.15); backdrop-filter: blur(8px); z-index: 1080; }
+[data-bs-theme="dark"] .dropdown-menu { background: rgba(22,22,28,0.92); }
+
+/* Small helper for badges */
+.badge { letter-spacing: .2px; }
+
+/* Page transition (fade between pages) */
+body.page-enter { animation: pageFadeIn .28s ease both; }
+body.page-leave { animation: pageFadeOut .18s ease forwards; }
+@keyframes pageFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pageFadeOut { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(4px); } }
+
+/* Toasts: animation + position tuning */
+@keyframes toast-in { from { transform: translate(12px, 12px); opacity: 0; } to { transform: translate(0,0); opacity: 1; } }
+.toast-animate { animation: toast-in .35s ease-out both; }
+.toast-area{
+  position: fixed !important;
+  /* encore plus vers la gauche pour être 100% visible */
+  right: clamp(80px, 20vw, 360px) !important;
+  bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+  z-index: 5000 !important;
+  pointer-events: none;
+}
+.toast-area .toast{ pointer-events: auto; min-width: 260px; max-width: min(70vw, 360px); width: auto; margin-bottom: 8px; }
+.toast-container{ max-height: none; overflow: visible; }
+.toast .toast-body{ white-space: normal; }
+
+/* Mobile: occuper toute la largeur disponible en bas */
+@media (max-width: 768px){
+  .toast-area{ right: 16px; left: 16px; bottom: 72px; }
+  .toast-area .toast{ max-width: 100%; min-width: 0; }
+}
+
+/* Toasts plus "peps" (couleurs vives + léger glow) */
+.toast{ position: relative; overflow: hidden; }
+.toast.text-bg-success{
+  background: linear-gradient(135deg, #198754, #2ecc71) !important;
+  color:#fff !important;
+}
+.toast.text-bg-danger{
+  background: linear-gradient(135deg, #dc3545, #ff4d6d) !important;
+  color:#fff !important;
+}
+.toast.text-bg-warning{
+  background: linear-gradient(135deg, #f59f00, #f76707) !important;
+  color:#fff !important;
+}
+.toast.text-bg-info{
+  background: linear-gradient(135deg, var(--accent-2), var(--accent)) !important;
+  color:#fff !important;
+}
+.toast.text-bg-success::before,
+.toast.text-bg-danger::before,
+.toast.text-bg-warning::before,
+.toast.text-bg-info::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:4px; opacity:.9;
+}
+.toast.text-bg-success::before{ background:#8ce99a; }
+.toast.text-bg-danger::before{ background:#ff8787; }
+.toast.text-bg-warning::before{ background:#ffd43b; }
+.toast.text-bg-info::before{ background:#66d9ff; }
+
+/* S'assurer que les modales passent au-dessus de la navbar/toasts */
+.modal { z-index: 1200; }
+.modal-backdrop { z-index: 1190; }
+
+/* --- Dénominations (billets/pièces) --- */
+.denom-btn { position: relative; display: inline-flex; align-items: center; gap:4px; min-width:84px; justify-content: center; }
+.denom-icon { display:inline-block; background-repeat:no-repeat; background-position:center; }
+.denom-icon.bill { width:32px; height:18px; border-radius:3px; background-image: linear-gradient(135deg,#ffd43b,#fab005); box-shadow: 0 0 0 1px rgba(0,0,0,0.25) inset; }
+.denom-icon.coin { width:22px; height:22px; border-radius:50%; background-image: radial-gradient(circle at 35% 35%, #f8f9fa, #ced4da); box-shadow: 0 0 0 1px rgba(0,0,0,0.3) inset; }
+.denom-btn.bill { border-color:#ffc107; }
+.denom-btn.bill:hover { background-color:#fff3cd; }
+[data-bs-theme="dark"] .denom-btn.bill:hover { background-color:#3d2e06; }
+.denom-btn.coin { border-color:#adb5bd; }
+.denom-btn.coin:hover { background-color:#f1f3f5; }
+[data-bs-theme="dark"] .denom-btn.coin:hover { background-color:#2b2f31; }
+.denom-label { font-weight:600; font-size:.85rem; min-width:40px; }
+.denom-count { font-size:.7rem; }
+
+/* Fond de caisse listes */
+.denom-icon.bill.small, .denom-icon.coin.small { width:14px; height:14px; margin-right:4px; vertical-align:middle; }
+ul.list-unstyled.small li { display:flex; align-items:center; gap:4px; }
+
+/* Produits en rupture */
+.product-card.sold-out { opacity:.45; pointer-events:none; filter:grayscale(40%); position:relative; }
+.product-card .sold-out-badge { position:absolute; top:4px; left:4px; background:#dc3545; color:#fff; font-size:.6rem; padding:2px 6px; border-radius:4px; letter-spacing:.5px; font-weight:600; }
+
+/* Boutons images billets/pièces (sans bordure/texte) */
+.denom-image-btn { position:relative; background:transparent !important; border:none !important; padding:2px !important; display:inline-flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; }
+.denom-image-btn img { height:42px; width:auto; display:block; }
+.denom-image-btn.bill img { height:48px; }
+/* Fallback texte quand l'image est absente */
+.denom-image-btn.bill .denom-label,
+.denom-stack:not(.coin) .denom-label { display:inline-flex; align-items:center; justify-content:center; height:48px; width:76px; border-radius:6px; background:linear-gradient(135deg,#2d7a45,#40a060); color:#fff; font-size:.9rem; font-weight:700; border:2px solid rgba(255,255,255,.3); }
+.denom-image-btn.coin .denom-label,
+.denom-stack.coin .denom-label { display:inline-flex; align-items:center; justify-content:center; height:42px; width:42px; border-radius:50%; background:radial-gradient(circle at 35% 35%,#f8c200,#d4900a); color:#fff; font-size:.75rem; font-weight:700; border:2px solid rgba(255,255,255,.3); }
+.denom-image-btn:focus { outline:2px solid rgba(0,0,0,0.25); outline-offset:2px; }
+[data-bs-theme="dark"] .denom-image-btn:focus { outline-color: rgba(255,255,255,0.4); }
+.denom-image-btn .badge { position:absolute; bottom:2px; right:2px; background:rgba(13,110,253,.85); }
+.change-denom.denom-image-btn .badge { background:rgba(33,37,41,.85); }
+/* Suggestions de rendu: réutilise les images mais badge jaune pour différencier */
+.suggest-denom.denom-image-btn { position: relative; }
+.suggest-denom.denom-image-btn .badge { position:absolute; bottom:2px; right:2px; background:rgba(255,193,7,.9); color:#212529; }
+/* Stack affichage caisse (image + quantité) */
+.denom-stack { position:relative; display:inline-block; }
+.denom-stack img { height:48px; width:auto; display:block; }
+.denom-stack.coin img { height:42px; }
+.denom-stack .badge { position:absolute; bottom:2px; right:2px; background:rgba(33,37,41,.85); }
+/* Total global caisse plus grand */
+.global-total-display { font-size: 2rem; line-height:1.1; }

@@ -1,0 +1,33 @@
+<div>
+  <div class="mb-2">
+    <strong>Client&nbsp;:</strong> {{ customer }}
+  </div>
+  {% if sales %}
+    <div class="mb-2 small text-muted">Ventes impayées (plus anciennes en premier)&nbsp;:</div>
+    <div class="border rounded p-2 mb-2" style="max-height:180px; overflow:auto;">
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th class="small">Vente</th>
+            <th class="small">Date</th>
+            <th class="small text-end">Solde</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in sales %}
+            <tr>
+              <td class="small">#{{ s.id }}</td>
+              <td class="small">{{ s.created_at|date:'d/m/Y H:i' }}</td>
+              <td class="small text-end">{{ s.balance|floatformat:2 }} €</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="mb-2">
+      <strong>Total des dettes&nbsp;:</strong> {{ total_debt }} €
+    </div>
+  {% else %}
+    <div class="text-muted">Aucune dette en cours pour ce client.</div>
+  {% endif %}
+</div>

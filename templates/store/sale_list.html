@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block title %}Historique des ventes - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="m-0">Historique des ventes</h2>
+  <div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#chooseCustomerModal">
+      Régler les dettes
+    </button>
+    <a class="btn btn-outline-secondary ms-2" href="{% url 'export_debtors_xlsx' %}">Exporter clients endettés</a>
+    <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#clearSalesModal">
+      Vider l'historique
+    </button>
+  </div>
+</div>
+
+<!-- Modal confirmation suppression historique -->
+<div class="modal fade" id="clearSalesModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Supprimer l'historique des ventes</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'clear_sales_history' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p>Cette action supprimera <strong>toutes</strong> les ventes, lignes et paiements.</p>
+          <ul class="small text-muted mb-0">
+            <li>Les produits ne sont pas remis en stock automatiquement.</li>
+            <li>Action irréversible. Confirmez pour continuer.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-danger" type="submit">Supprimer tout</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<!-- Filtres -->
+<form method="get" class="row g-2 mb-3 align-items-end">
+  <div class="col-auto">
+    <input type="text" name="customer" class="form-control form-control-sm" placeholder="Nom du client" value="{{ q_customer }}">
+  </div>
+  <div class="col-auto">
+    <select name="status" class="form-select form-select-sm">
+      <option value="" {% if not q_status %}selected{% endif %}>Tous les statuts</option>
+      <option value="paid" {% if q_status == 'paid' %}selected{% endif %}>Payé</option>
+      <option value="unpaid" {% if q_status == 'unpaid' %}selected{% endif %}>Non payé</option>
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-outline-primary">Filtrer</button>
+    {% if q_customer or q_status %}<a href="{% url 'sale_list' %}" class="btn btn-sm btn-outline-secondary ms-1">Réinitialiser</a>{% endif %}
+  </div>
+  <div class="col-auto ms-auto text-muted small align-self-center">{{ sales.paginator.count }} vente{{ sales.paginator.count|pluralize }}</div>
+</form>
+
+<div class="table-responsive border rounded-3 overflow-hidden shadow-sm">
+<table class="table table-striped align-middle mb-0">
+  <thead>
+    <tr>
+      <th>Client</th>
+      <th>Date</th>
+      <th>Total</th>
+      <th>Payé</th>
+      <th>Dettes</th>
+      <th>Statut</th>
+      <th style="width:220px" class="text-end">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in sales %}
+      <tr>
+        <td>{% if s.customer %}<a href="{% url 'customer_detail' s.customer.pk %}" class="text-decoration-none">{{ s.customer }}</a>{% else %}<span class="text-muted">(aucun)</span>{% endif %}</td>
+        <td>{{ s.created_at|date:'d/m/Y H:i' }}</td>
+        <td>{{ s.total|floatformat:2 }} €</td>
+        <td>{{ s.amount_paid|floatformat:2 }} €</td>
+        <td class="{% if s.balance > 0 %}text-danger{% endif %}">{{ s.balance|floatformat:2 }} €</td>
+        <td>
+          {% if s.balance > 0 %}
+            <span class="badge bg-warning text-dark">Non payé</span>
+          {% else %}
+            <span class="badge bg-success">Payé</span>
+          {% endif %}
+        </td>
+        <td class="text-end">
+          <button type="button" class="btn btn-sm btn-outline-secondary receipt-open" data-bs-toggle="modal" data-bs-target="#receiptModal" data-id="{{ s.id }}">Détails</button>
+          {% if s.balance > 0 %}
+            <button class="btn btn-sm btn-primary pay-open" data-id="{{ s.id }}" data-balance="{{ s.balance }}">Régulariser</button>
+          {% endif %}
+          {% if request.user.is_superuser or request.user.groups.filter(name='Admin').exists %}
+            <button type="button" class="btn btn-sm btn-outline-danger sale-delete-btn" data-id="{{ s.id }}" data-bs-toggle="modal" data-bs-target="#deleteSaleModal" title="Supprimer cette vente"><i class="bi bi-trash"></i></button>
+          {% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-center text-muted">Aucune vente</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if sales.has_other_pages %}
+<nav class="mt-3 d-flex justify-content-center">
+  <ul class="pagination pagination-sm mb-0">
+    {% if sales.has_previous %}
+      <li class="page-item"><a class="page-link" href="?page={{ sales.previous_page_number }}&customer={{ q_customer }}&status={{ q_status }}">«</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">«</span></li>
+    {% endif %}
+    {% for num in sales.paginator.page_range %}
+      {% if sales.number == num %}
+        <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+      {% elif num >= sales.number|add:"-3" and num <= sales.number|add:"3" %}
+        <li class="page-item"><a class="page-link" href="?page={{ num }}&customer={{ q_customer }}&status={{ q_status }}">{{ num }}</a></li>
+      {% endif %}
+    {% endfor %}
+    {% if sales.has_next %}
+      <li class="page-item"><a class="page-link" href="?page={{ sales.next_page_number }}&customer={{ q_customer }}&status={{ q_status }}">»</a></li>
+    {% else %}
+      <li class="page-item disabled"><span class="page-link">»</span></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}
+
+<!-- Modal suppression d'une vente (admin) -->
+<div class="modal fade" id="deleteSaleModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Supprimer la vente</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="deleteSaleForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          <p>Supprimer la vente <strong id="deleteSaleId">#–</strong> ?</p>
+          <ul class="small text-muted mb-0">
+            <li>Les articles seront remis en stock automatiquement.</li>
+            <li>Les paiements associés seront également supprimés.</li>
+            <li>Action irréversible.</li>
+          </ul>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-danger" type="submit">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal sélection de client en dette -->
+<div class="modal fade" id="chooseCustomerModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Choisir un client en dette</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="debtCustomersBody">
+        <div class="text-muted small">Chargement…</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Paiement groupé par client -->
+<div class="modal fade" id="bulkPayModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Régler les dettes du client</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="bulkPayForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div id="bulkSummary" class="mb-3 small text-muted">Chargement…</div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Montant à encaisser</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="amount" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Méthode</label>
+              <select class="form-select" name="method">
+                {% for v,lbl in methods %}
+                  <option value="{{ v }}">{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-success" type="submit">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
+
+<!-- Modal Régulariser paiement -->
+<div class="modal fade" id="payModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Régulariser le paiement</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <form id="payForm" method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-2">Solde actuel : <strong id="payBalance">0,00 €</strong></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Montant</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="amount" required>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label">Méthode</label>
+              <select class="form-select" name="method">
+                {% for v,lbl in methods %}
+                  <option value="{{ v }}">{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- (Reçu déplacé hors de cette modale) -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button class="btn btn-success" type="submit">Valider</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Fermeture correcte de payModal -->
+  </div>
+
+  <!-- Modal Reçu séparée -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title">Détail de la vente</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="receiptBody">
+        <div class="text-muted small">Sélectionnez une vente…</div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Suppression vente (admin)
+  (function(){
+    const modalEl = document.getElementById('deleteSaleModal');
+    if(!modalEl) return;
+    modalEl.addEventListener('show.bs.modal', (ev) => {
+      const btn = ev.relatedTarget;
+      if(!btn) return;
+      const id = btn.getAttribute('data-id');
+      document.getElementById('deleteSaleId').textContent = '#' + id;
+      document.getElementById('deleteSaleForm').action = `/sales/${id}/delete/`;
+    });
+  })();
+
+  (function(){
+    const modalEl = document.getElementById('payModal');
+    if(!modalEl) return;
+    const form = document.getElementById('payForm');
+    let saleId = null;
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.pay-open'); if(!btn) return;
+      saleId = btn.getAttribute('data-id');
+      const balance = parseFloat(btn.getAttribute('data-balance')||'0');
+      document.getElementById('payBalance').textContent = balance.toFixed(2).replace('.', ',') + ' €';
+      form.action = `{% url 'add_payment' 0 %}`.replace('/0/', `/${saleId}/`);
+      const m = new bootstrap.Modal(modalEl); m.show();
+    });
+  })();
+
+  // Paiement groupé par client
+  function openBulkPay(customerId){
+    const modalEl = document.getElementById('bulkPayModal');
+    const form = document.getElementById('bulkPayForm');
+    const summary = document.getElementById('bulkSummary');
+    if(!modalEl || !form || !summary) return;
+    form.action = `{% url 'bulk_settle_customer' 0 %}`.replace('/0/', `/${customerId}/`);
+    summary.innerHTML = 'Chargement…';
+    fetch(`{% url 'bulk_settle_customer' 0 %}`.replace('/0/', `/${customerId}/`), { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(r => r.text())
+      .then(html => { summary.innerHTML = html; })
+      .catch(()=>{ summary.innerHTML = '<div class="text-danger small">Erreur de chargement</div>'; });
+    const m = new bootstrap.Modal(modalEl); m.show();
+  }
+
+  // Charger la liste des clients en dette à l'ouverture de la modale
+  (function(){
+    const modalEl = document.getElementById('chooseCustomerModal');
+    const body = document.getElementById('debtCustomersBody');
+    if(!modalEl || !body) return;
+    modalEl.addEventListener('show.bs.modal', ()=>{
+      body.innerHTML = '<div class="text-muted small">Chargement…</div>';
+      fetch(`{% url 'debt_customers_list' %}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(r => r.text())
+        .then(html => { body.innerHTML = html; })
+        .catch(()=>{ body.innerHTML = '<div class="text-danger small">Erreur de chargement</div>'; });
+    });
+    // Délégation: clic sur un client -> ouvrir la modale de paiement groupé
+    modalEl.addEventListener('click', (e)=>{
+      const a = e.target.closest('.debt-customer-item'); if(!a) return;
+      e.preventDefault();
+      const id = a.getAttribute('data-customer-id');
+      const m = bootstrap.Modal.getInstance(modalEl); if(m) m.hide();
+      // Une fois fermée, ouvrir l'autre modale
+      setTimeout(()=>openBulkPay(id), 200);
+    });
+  })();
+
+  // Soumission AJAX du paiement groupé
+  (function(){
+    const form = document.getElementById('bulkPayForm');
+    const modalEl = document.getElementById('bulkPayModal');
+    if(!form || !modalEl) return;
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const fd = new FormData(form);
+      try{
+        const res = await fetch(form.action, { method:'POST', headers:{ 'X-Requested-With': 'XMLHttpRequest' }, body: fd, credentials:'same-origin' });
+        if(!res.ok){ throw new Error('HTTP '+res.status); }
+        const data = await res.json();
+        // Fermer la modale et rafraîchir la liste pour mettre à jour les soldes
+        const m = bootstrap.Modal.getInstance(modalEl); if(m) m.hide();
+        // Option simple: recharger la page pour refléter les dettes mises à jour
+        window.location.reload();
+      }catch(err){
+        // Afficher une petite erreur en pied de modale
+        const footer = modalEl.querySelector('.modal-footer');
+        if(footer){
+          const note = document.createElement('div');
+          note.className = 'text-danger small me-auto';
+          note.textContent = 'Erreur lors de l\'enregistrement.';
+          footer.prepend(note);
+          setTimeout(()=>note.remove(), 3000);
+        }
+      }
+    });
+  })();
+
+  // Chargement du reçu lors de l'ouverture (événement Bootstrap)
+  (function(){
+    const receiptModal = document.getElementById('receiptModal');
+    const body = document.getElementById('receiptBody');
+    if(!receiptModal || !body) return;
+    receiptModal.addEventListener('show.bs.modal', async (ev)=>{
+      const trigger = ev.relatedTarget;
+      if(!trigger) return;
+      const id = trigger.getAttribute('data-id');
+      if(!id){ body.innerHTML = '<div class="text-muted small">ID manquant.</div>'; return; }
+      body.innerHTML = '<div class="text-muted small">Chargement…</div>';
+      try {
+        const url = `{% url 'sale_receipt_fragment' 0 %}`.replace('/0/', `/${id}/`);
+        const res = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if(!res.ok) throw new Error('HTTP '+res.status);
+        const html = await res.text();
+        body.innerHTML = html;
+      } catch (e) {
+        body.innerHTML = '<div class="text-danger small">Erreur de chargement</div>';
+      }
+    });
+  })();
+</script>
+{% endblock %}

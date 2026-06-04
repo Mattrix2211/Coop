@@ -1,0 +1,14 @@
+{% if entries %}
+<div class="list-group">
+  {% for customer, amount in entries %}
+    <a href="#" class="list-group-item list-group-item-action debt-customer-item" data-customer-id="{{ customer.id }}">
+      <div class="d-flex justify-content-between">
+        <span>{{ customer }}</span>
+        <span class="fw-semibold">{{ amount }} €</span>
+      </div>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+  <div class="text-muted">Aucun client en dette.</div>
+{% endif %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block title %}Tableau de bord - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h2 class="mb-0">Tableau de bord</h2>
+  <div class="d-flex align-items-center gap-2">
+    <div class="btn-group" role="group" aria-label="Période">
+      <a href="?p=day" class="btn btn-sm btn-outline-primary {% if period == 'day' %}active{% endif %}">Jour</a>
+      <a href="?p=week" class="btn btn-sm btn-outline-primary {% if period == 'week' %}active{% endif %}">Semaine</a>
+      <a href="?p=month" class="btn btn-sm btn-outline-primary {% if period == 'month' %}active{% endif %}">Mois</a>
+      <a href="?p=year" class="btn btn-sm btn-outline-primary {% if period == 'year' %}active{% endif %}">Année</a>
+    </div>
+  </div>
+  <small class="text-muted w-100">Période: {{ period_label }}</small>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100 border-0 shadow-sm" style="border-left:4px solid #198754 !important;">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-cash-coin fs-5 text-success"></i>
+        <span class="text-muted small">Ventes</span>
+      </div>
+      <div class="fs-4 fw-bold text-success">{{ sum_period|floatformat:2 }} €</div>
+      <div class="small text-muted">Transactions : {{ count_period }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100 border-0 shadow-sm" style="border-left:4px solid #0d6efd !important;">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-basket2 fs-5 text-primary"></i>
+        <span class="text-muted small">Panier moyen</span>
+      </div>
+      <div class="fs-4 fw-bold text-primary">{{ avg_period|floatformat:2 }} €</div>
+      <div class="small text-muted">Transactions : {{ count_period }}</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100 border-0 shadow-sm" style="border-left:4px solid #6f42c1 !important;">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-receipt fs-5" style="color:#6f42c1"></i>
+        <span class="text-muted small">Transactions</span>
+      </div>
+      <div class="fs-4 fw-bold" style="color:#6f42c1">{{ count_period }}</div>
+      <div class="small text-muted">Ventes : {{ sum_period|floatformat:2 }} €</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card p-3 h-100 border-0 shadow-sm" style="border-left:4px solid #fd7e14 !important;">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        <i class="bi bi-people fs-5 text-warning"></i>
+        <span class="text-muted small">Clients actifs</span>
+      </div>
+      <div class="fs-4 fw-bold text-warning">{{ active_customers_count }}</div>
+      <div class="small text-muted">Panier moyen : {{ avg_period|floatformat:2 }} €</div>
+    </div>
+  </div>
+</div>
+<div class="row g-4">
+  <div class="col-md-8">
+    <div class="card p-3">
+      <h5>Ventes</h5>
+      <canvas id="salesChart" height="120"></canvas>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card p-3">
+      <h5>Top produits</h5>
+      <canvas id="topChart" height="120"></canvas>
+    </div>
+  </div>
+</div>
+<div class="row g-4 mt-1">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5>Stocks bas</h5>
+      <ul class="list-group list-group-flush">
+        {% for p in low_stock %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ p.name }}</span>
+            <span class="badge bg-warning text-dark">{{ p.quantity }}</span>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucun stock bas</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="m-0">Top clients endettés</h5>
+        <a href="{% url 'export_debtors_xlsx' %}" class="btn btn-sm btn-outline-secondary">Exporter</a>
+      </div>
+      <ul class="list-group list-group-flush mt-2">
+        {% for c, amt in debtors %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ c }}</span>
+            <strong class="text-danger">{{ amt }} €</strong>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucun client en dette</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5>Meilleurs clients</h5>
+      <ul class="list-group list-group-flush">
+        {% for name, amount in top_customers %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ name }}</span>
+            <strong>{{ amount|floatformat:2 }} €</strong>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucun client sur la période</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card p-3">
+      <h5>Plus gros paniers</h5>
+      <ul class="list-group list-group-flush">
+        {% for s in biggest_baskets %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>#{{ s.id }} — {{ s.customer|default:'(aucun)' }}</span>
+            <strong>{{ s.total|floatformat:2 }} €</strong>
+          </li>
+        {% empty %}
+          <li class="list-group-item">Aucun</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-12">
+    <div class="card p-3">
+      <h5>Ventes récentes</h5>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead>
+            <tr><th>Date</th><th>Client</th><th class="text-end">Total</th><th class="text-end">Payé</th><th class="text-end">Solde</th></tr>
+          </thead>
+          <tbody>
+            {% for s in recent_sales %}
+              <tr>
+                <td>{{ s.created_at|date:'d/m/Y H:i' }}</td>
+                <td>{% if s.customer %}{{ s.customer }}{% else %}<span class="text-muted">(aucun)</span>{% endif %}</td>
+                <td class="text-end">{{ s.total|floatformat:2 }} €</td>
+                <td class="text-end">{{ s.amount_paid|floatformat:2 }} €</td>
+                <td class="text-end {% if s.balance > 0 %}text-danger{% endif %}">{{ s.balance|floatformat:2 }} €</td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="5" class="text-center">Aucune vente</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{{ chart_sales_labels|json_script:"chart_sales_labels" }}
+{{ chart_sales_data|json_script:"chart_sales_data" }}
+{{ top_products_labels|json_script:"top_products_labels" }}
+{{ top_products_data|json_script:"top_products_data" }}
+{{ top_customers_labels|json_script:"top_customers_labels" }}
+{{ top_customers_data|json_script:"top_customers_data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+  const salesLabels = JSON.parse(document.getElementById('chart_sales_labels').textContent);
+  const salesData = JSON.parse(document.getElementById('chart_sales_data').textContent);
+  const topLabels = JSON.parse(document.getElementById('top_products_labels').textContent);
+  const topData = JSON.parse(document.getElementById('top_products_data').textContent);
+  new Chart(document.getElementById('salesChart'), {
+    type: 'line',
+    data: { labels: salesLabels, datasets: [{ label: 'Ventes (€)', data: salesData, borderColor: '#0d6efd', fill:false }] },
+    options: { scales: { y: { beginAtZero: true }}}
+  });
+  new Chart(document.getElementById('topChart'), {
+    type: 'bar',
+    data: { labels: topLabels, datasets: [{ label: 'Quantités vendues', data: topData, backgroundColor: '#198754' }] },
+    options: {
+      indexAxis: 'y',
+      scales: {
+        x: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1,
+            callback: function(value) { return Number.isInteger(value) ? value : null; }
+          }
+        }
+      }
+    }
+  });
+</script>
+{% endblock %}

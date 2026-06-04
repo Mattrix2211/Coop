@@ -1,0 +1,17 @@
+# Environnement
+.venv/
+*.pyc
+__pycache__/
+*.pyo
+
+# Django
+db.sqlite3
+media/
+staticfiles/
+
+# Secrets
+.env
+
+# OS
+.DS_Store
+Thumbs.db

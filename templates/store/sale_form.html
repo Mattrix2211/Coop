@@ -1,0 +1,814 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+{% block title %}Vente - Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="m-0">Vente</h2>
+ </div>
+
+<div class="row g-3">
+  <div class="col-lg-7 col-xl-6">
+    <div class="card p-3 mb-3">
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap">
+        <div id="catBar" class="d-flex gap-2 flex-wrap">
+          <button type="button" class="btn btn-sm btn-outline-primary active" data-cat="*">Tout</button>
+        </div>
+        <div class="ms-auto"></div>
+        <input id="productSearch" class="form-control" placeholder="Rechercher..." style="max-width:300px" />
+      </div>
+  <div class="product-grid kiosk" id="productGrid">
+        {% regroup gallery_products by category as prods_by_cat %}
+        {% for group in prods_by_cat %}
+          {% with key=group.grouper|default:'Sans catégorie' %}
+          {% with skey=key|slugify %}
+          {% with gid='grp-'|add:skey %}
+          <div class="w-100 d-flex align-items-center justify-content-between text-primary" style="grid-column:1/-1; margin-top:.25rem;">
+            <button type="button" class="btn btn-sm btn-link text-decoration-none cat-toggle" data-target="{{ gid }}">
+              <i class="bi bi-caret-down-fill me-1"></i>{{ key }}
+            </button>
+          </div>
+          <div class="group-body product-grid kiosk" data-group="{{ gid }}" style="display:grid; grid-column:1/-1;">
+          {% for p in group.list %}
+            <div class="product-card {% if p.quantity == 0 %}sold-out{% endif %}" data-id="{{ p.id }}" data-name="{{ p.name|escapejs }}" data-price="{{ p.price|unlocalize }}" data-stock="{{ p.quantity }}" data-category="{% if p.category %}{{ p.category.name|escapejs }}{% else %}Sans catégorie{% endif %}">
+              {% if p.image %}
+                <img src="{{ p.image.url }}" alt="{{ p.name }}">
+              {% else %}
+                <img src="{% static 'img/placeholder.png' %}" alt="{{ p.name }}">
+              {% endif %}
+              <div class="pname">{{ p.name }}</div>
+              <div class="pprice">{{ p.price|floatformat:2 }} €</div>
+              {% if p.quantity == 0 %}<div class="sold-out-badge">Rupture</div>{% endif %}
+            </div>
+          {% endfor %}
+          </div>
+          {% endwith %}
+          {% endwith %}
+          {% endwith %}
+        {% empty %}
+          <div class="text-muted">Aucun produit à afficher</div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <form method="post" id="saleForm" class="col-lg-5 col-xl-6">
+    <div id="formAlert" class="alert alert-danger py-2 px-3 d-none" role="alert"></div>
+    {% csrf_token %}
+    <div class="row g-3 mb-2">
+      <div class="col-md-6">{{ form.customer.label_tag }}
+        <div class="position-relative">
+          <div class="input-group input-group-sm mb-2">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input type="text" id="customerSearch" class="form-control" placeholder="Rechercher un client...">
+          </div>
+          <div id="customerSuggestions" class="list-group shadow-sm position-absolute w-100" style="z-index:1051; max-height:220px; overflow:auto; display:none;"></div>
+        </div>
+        {{ form.customer }}
+      </div>
+      <div class="col-md-6">{{ form.note.label_tag }} {{ form.note }}</div>
+    </div>
+    
+
+    {{ formset.management_form }}
+  <div class="table-responsive w-100 border rounded-3 overflow-hidden shadow-sm">
+    <table class="table align-middle kiosk-cart mb-0" id="cartTable">
+    <thead>
+  <tr><th>Produit</th><th style="width:170px" class="text-center">Quantité</th><th style="width:140px" class="text-end">Total</th><th style="width:80px" class="text-center sticky-end">Suppr.</th></tr>
+    </thead>
+      <tbody id="cartBody">
+        <tr id="cartEmptyRow">
+          <td colspan="4" class="text-center text-muted py-4">
+            <i class="bi bi-cart3 fs-2 d-block mb-1 opacity-25"></i>
+            Cliquez sur un produit pour l'ajouter
+          </td>
+        </tr>
+        {% for f in formset %}
+          <tr class="item-row" style="display:none;">
+            <td class="prod-cell">{{ f.product }}</td>
+            <td>
+              <div class="d-flex justify-content-center align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary cart-dec" aria-label="Moins">−</button>
+                {{ f.quantity }}
+                <button type="button" class="btn btn-sm btn-outline-secondary cart-inc" aria-label="Plus">+</button>
+              </div>
+              {{ f.unit_price }}
+            </td>
+            <td class="line-total text-end">0,00 €</td>
+            <td class="text-center sticky-end">
+              <span class="d-none">{{ f.DELETE }}</span>
+              <button type="button" class="btn btn-sm btn-danger cart-del" title="Supprimer"><i class="bi bi-trash"></i></button>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+  </table>
+  </div>
+    <!-- Bloc paiement retiré: paiement effectué après création via modale -->
+    <div class="mt-3">
+      <div class="card p-3">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+          <div class="d-flex gap-4">
+            <div><div class="text-muted">Total</div><div class="fw-bold display-6" id="sumTotal">0,00 €</div></div>
+          </div>
+          <div class="ms-auto">
+            <button class="btn btn-success btn-lg px-4" type="submit" id="saleSubmit"><i class="bi bi-check2-circle me-1"></i> Valider panier</button>
+          </div>
+        </div>
+        <div id="cartSummary" class="small mt-3"></div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<!-- Modal Paiement -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title">Paiement</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2"><strong>Total à régler:</strong> <span id="payTotal">0,00 €</span></div>
+        <div class="mb-3">
+          <label class="form-label">Méthode</label>
+          <select id="payMethod" class="form-select form-select-sm">
+            <option value="CASH">Espèce</option>
+            <option value="CHEQUE">Chèque</option>
+            <option value="OTHER">Autre</option>
+          </select>
+        </div>
+        <div id="cashSection" class="border rounded p-2 mb-2">
+          <div class="small text-muted mb-2">Cliquer sur chaque billet/pièce remis par le client.</div>
+          <div id="cashDenoms" class="d-flex flex-wrap gap-2">
+            {% for d in denom_entries %}
+            <button type="button" class="pay-denom denom-image-btn {{ d.type }}" data-denom="{{ d.value }}" data-safe="{{ d.safe }}" title="{{ d.value }} €">
+              {% if d.img %}<img src="{% static d.img %}" alt="{{ d.value }} €" />{% else %}<span class="denom-label">{{ d.value }} €</span>{% endif %}
+              <span class="badge bg-primary denom-count" style="display:none;">0</span>
+            </button>
+            <input type="hidden" class="denom-input" data-safe="{{ d.safe }}" value="0">
+            {% endfor %}
+          </div>
+          <div id="cashSelectedList" class="mt-2 small" style="display:none;">
+            <div class="fw-semibold mb-1">Espèces données :</div>
+            <ul class="list-unstyled mb-0" id="cashSelectedUl"></ul>
+          </div>
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <button type="button" id="cashReset" class="btn btn-sm btn-warning">Réinitialiser</button>
+            <button type="button" id="cashUndo" class="btn btn-sm btn-secondary">Annuler dernier</button>
+          </div>
+          <div class="mt-2 small" id="cashGiven">Montant donné: 0,00 €</div>
+          <div class="mt-1 small" id="cashChange" style="display:none;">Rendu à rendre: <span id="cashChangeAmt">0,00 €</span></div>
+          <div class="mt-2 small" id="changeSuggestionWrap" style="display:none;">
+            <div class="fw-semibold mb-1">Suggestion rendu:</div>
+            <div id="changeSuggestion" class="d-flex flex-wrap gap-2"></div>
+            <div class="text-danger small mt-1 d-none" id="changePartialWarn">Rendu partiel: manquerait <span id="changeMissing">0,00 €</span></div>
+          </div>
+          <div id="manualChangeSection" class="border rounded p-2 mt-3" style="display:none;">
+            <div class="small text-muted mb-2">Rendu effectif au client (cliquer les billets/pièces que VOUS rendez).</div>
+            <div id="changeDenoms" class="d-flex flex-wrap gap-2">
+              {% for d in denom_entries %}
+              <button type="button" class="change-denom denom-image-btn {{ d.type }}" data-denom="{{ d.value }}" data-safe="{{ d.safe }}" title="Rendu {{ d.value }} €">
+                {% if d.img %}<img src="{% static d.img %}" alt="{{ d.value }} €" />{% else %}<span class="denom-label">{{ d.value }} €</span>{% endif %}
+                <span class="badge bg-dark change-count" style="display:none;">0</span>
+              </button>
+              <input type="hidden" class="change-denom-input" data-safe="{{ d.safe }}" value="0">
+              {% endfor %}
+            </div>
+            <div class="mt-2 d-flex flex-wrap gap-2">
+              <button type="button" id="changeReset" class="btn btn-sm btn-outline-warning">Réinit. rendu</button>
+              <button type="button" id="changeUndo" class="btn btn-sm btn-outline-secondary">Annuler dernier rendu</button>
+              <button type="button" id="applySuggestion" class="btn btn-sm btn-outline-primary">Appliquer suggestion</button>
+            </div>
+            <div class="mt-2 small" id="manualChangeTotal">Rendu saisi: 0,00 €</div>
+            <div class="mt-1 small text-danger d-none" id="manualChangeMismatch">Différence avec attendu: <span id="manualChangeDiff">0,00 €</span></div>
+          </div>
+        </div>
+        <div id="nonCashSection" class="d-none mb-3">
+          <label class="form-label">Montant payé</label>
+          <input type="number" step="0.01" min="0" class="form-control form-control-sm" id="otherAmount" placeholder="Montant exact">
+        </div>
+        <div class="alert alert-danger py-2 px-3 d-none" id="payError"></div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Payer plus tard</button>
+        <button type="button" class="btn btn-success" id="doPay"><i class="bi bi-cash-coin me-1"></i> Encaisser</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reçu après paiement -->
+<div class="modal fade" id="receiptModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content">
+      <div class="modal-header py-2">
+        <h5 class="modal-title">Reçu</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="receiptBody">
+        <div class="text-muted small">Traitement…</div>
+      </div>
+      <div class="modal-footer py-2">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<script>
+  // Prix produits (pour auto-remplir le prix unitaire depuis le select) à partir des cartes du catalogue
+  const productPrices = {};
+  document.querySelectorAll('#productGrid .product-card').forEach(card => {
+    if(card.dataset.id) {
+      // s'assurer que le séparateur décimal est un point pour les inputs type=number
+      productPrices[card.dataset.id] = String(card.dataset.price).replace(',', '.');
+    }
+  });
+
+  // Filtrage du catalogue
+  const searchInput = document.getElementById('productSearch');
+  const grid = document.getElementById('productGrid');
+  const catBar = document.getElementById('catBar');
+  searchInput?.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase();
+    grid.querySelectorAll('.product-card').forEach(card => {
+      const name = card.dataset.name.toLowerCase();
+      const activeBtn = catBar?.querySelector('button.active');
+      const cat = activeBtn ? activeBtn.getAttribute('data-cat') : '*';
+      const byCat = (cat==='*') || (card.dataset.category===cat);
+      card.style.display = (name.includes(q) && byCat) ? '' : 'none';
+    });
+  });
+
+  // Construire la barre de catégories + filtrage
+  (function(){
+    if(!grid || !catBar) return;
+    const cats = new Set();
+    grid.querySelectorAll('.product-card').forEach(card=>{
+      cats.add(card.dataset.category || 'Sans catégorie');
+    });
+    [...cats].sort((a,b)=>a.localeCompare(b,'fr')).forEach(c=>{
+      const btn = document.createElement('button');
+      btn.type='button'; btn.className='btn btn-sm btn-outline-primary';
+      btn.textContent = c; btn.setAttribute('data-cat', c);
+      catBar.appendChild(btn);
+    });
+    catBar.addEventListener('click', (e)=>{
+      const b = e.target.closest('button[data-cat]'); if(!b) return;
+      catBar.querySelectorAll('button').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      const cat = b.getAttribute('data-cat');
+      const q = (searchInput?.value || '').toLowerCase();
+      grid.querySelectorAll('.product-card').forEach(card=>{
+        const byCat = (cat==='*') || (card.dataset.category===cat);
+        const byText = (card.dataset.name.toLowerCase().includes(q));
+        card.style.display = (byCat && byText) ? '' : 'none';
+      });
+    });
+  })();
+
+  // Repli/extension des sections de catégories du catalogue
+  (function(){
+    document.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.cat-toggle');
+      if(!btn) return;
+      const gid = btn.getAttribute('data-target');
+      if(!gid) return;
+      const body = document.querySelector(`.group-body[data-group="${gid}"]`);
+      if(!body) return;
+      const icon = btn.querySelector('i.bi');
+      const isHidden = body.style.display === 'none';
+      body.style.display = isHidden ? 'grid' : 'none';
+      if(icon){ icon.classList.toggle('bi-caret-down-fill', isHidden); icon.classList.toggle('bi-caret-right-fill', !isHidden); }
+    });
+  })();
+
+  // Ajout au panier via formset
+  function setSelectValue(select, value){
+    select.value = value;
+    // si la valeur n’existe pas (select filtré), on essaie de l’ajouter
+    if(select.value != value){
+      const opt = document.createElement('option');
+      opt.value = value; opt.textContent = '[sélection]';
+      select.appendChild(opt); select.value = value;
+    }
+  }
+
+  function addOrIncrease(productId, name, price){
+    const priceNorm = String(price).replace(',', '.');
+    const rows = Array.from(document.querySelectorAll('#cartBody .item-row'));
+    // chercher une ligne avec ce produit
+    for(const row of rows){
+      const select = row.querySelector('select');
+      if(select && select.value == String(productId)){
+        const qty = row.querySelector('input[name$="-quantity"]');
+        qty.value = (parseInt(qty.value||'0',10) || 0) + 1;
+        const unit = row.querySelector('input[name$="-unit_price"]');
+        // si le prix n'est pas encore rempli (cas virgule/invalid), le fixer
+        if(unit && !unit.value){ unit.value = priceNorm; unit.setAttribute('readonly','readonly'); }
+        return;
+      }
+    }
+    // sinon, chercher une ligne vide (visible ou cachée)
+    for(const row of rows){
+      const select = row.querySelector('select');
+      if(select && !select.value){
+        setSelectValue(select, String(productId));
+        const qty = row.querySelector('input[name$="-quantity"]');
+        qty.value = 1;
+        const unit = row.querySelector('input[name$="-unit_price"]');
+        unit.value = priceNorm;
+        unit.setAttribute('readonly','readonly');
+        row.style.display = '';
+        return;
+      }
+    }
+    // Pas de ligne libre: on clone la dernière ligne
+    const last = rows[rows.length-1];
+    const clone = last.cloneNode(true);
+    const totalForms = document.querySelector('#id_items-TOTAL_FORMS');
+    const index = parseInt(totalForms.value, 10);
+    clone.querySelectorAll('[name]').forEach(el => {
+      el.name = el.name.replace(/-(\d+)-/, `-${index}-`);
+      const idAttr = el.id ? el.id.replace(/_(\d+)_/, `_${index}_`) : '';
+      if(idAttr) el.id = idAttr;
+      if(el.type === 'checkbox') el.checked = false;
+      else el.value = '';
+    });
+    totalForms.value = index + 1;
+    clone.style.display = '';
+    document.getElementById('cartBody').appendChild(clone);
+    // remplir la nouvelle ligne
+    const select = clone.querySelector('select');
+    setSelectValue(select, String(productId));
+    const qty = clone.querySelector('input[name$="-quantity"]');
+    qty.value = 1;
+    const unit = clone.querySelector('input[name$="-unit_price"]');
+    unit.value = priceNorm;
+    unit.setAttribute('readonly','readonly');
+  }
+
+  grid?.addEventListener('click', (e)=>{
+    const card = e.target.closest('.product-card');
+    if(!card) return;
+    if(card.classList.contains('sold-out')) return;
+    addOrIncrease(card.dataset.id, card.dataset.name, card.dataset.price);
+    recalc();
+    updateCartEmpty();
+  });
+
+  // Recherche client avec suggestions (plus jolie)
+  (function(){
+    const input = document.getElementById('customerSearch');
+    const select = document.querySelector('select[name="customer"]');
+    const sugg = document.getElementById('customerSuggestions');
+    if(!input || !select || !sugg) return;
+    let active = -1;
+    function buildSuggestions(){
+      const q = input.value.trim().toLowerCase();
+      const opts = Array.from(select.options).filter(o=>o.value);
+      const matches = q? opts.filter(o => (o.textContent||'').toLowerCase().includes(q)) : opts;
+      sugg.innerHTML = '';
+      active = -1;
+      matches.slice(0,8).forEach((o)=>{
+        const a = document.createElement('a');
+        a.href = '#'; a.className = 'list-group-item list-group-item-action';
+        a.textContent = o.textContent;
+        a.dataset.value = o.value;
+        a.addEventListener('click', (ev)=>{ ev.preventDefault(); select.value = o.value; sugg.style.display='none'; });
+        sugg.appendChild(a);
+      });
+      sugg.style.display = matches.length? 'block' : 'none';
+    }
+    input.addEventListener('input', buildSuggestions);
+    input.addEventListener('focus', buildSuggestions);
+    input.addEventListener('keydown', (e)=>{
+      const items = Array.from(sugg.querySelectorAll('.list-group-item'));
+      if(e.key==='ArrowDown'){ e.preventDefault(); active = Math.min(active+1, items.length-1); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); active = Math.max(active-1, 0); }
+      else if(e.key==='Enter'){ if(active>=0 && items[active]){ e.preventDefault(); items[active].click(); } }
+      else if(e.key==='Escape'){ sugg.style.display='none'; return; }
+      items.forEach((el,i)=>{ el.classList.toggle('active', i===active); });
+    });
+    document.addEventListener('click', (e)=>{
+      if(!sugg.contains(e.target) && e.target !== input){ sugg.style.display='none'; }
+    });
+  })();
+
+  // Calculs automatiques (total et totaux par ligne)
+  function parseNum(v){
+    const n = parseFloat(String(v).replace(',', '.'));
+    return isNaN(n) ? 0 : n;
+  }
+  function updateCartEmpty(){
+    const visibleRows = Array.from(document.querySelectorAll('#cartBody .item-row')).filter(r=>r.style.display!=='none');
+    const emptyRow = document.getElementById('cartEmptyRow');
+    if(emptyRow) emptyRow.style.display = visibleRows.length ? 'none' : '';
+  }
+
+  function recalc(){
+    let total = 0;
+    document.querySelectorAll('#cartBody .item-row').forEach(row=>{
+      const q = parseNum(row.querySelector('input[name$="-quantity"]').value);
+      const u = parseNum(row.querySelector('input[name$="-unit_price"]').value);
+      const line = q * u;
+      total += line;
+      const cell = row.querySelector('.line-total');
+      if(cell){
+        const fmt = x => (Math.round(x*100)/100).toFixed(2).replace('.', ',') + ' €';
+        cell.textContent = fmt(line);
+      }
+    });
+    const fmt = x => (Math.round(x*100)/100).toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('sumTotal').textContent = fmt(total);
+    // Construire liste produits sélectionnés
+    const summaryEl = document.getElementById('cartSummary');
+    if(summaryEl){
+      const entries = [];
+      document.querySelectorAll('#cartBody .item-row').forEach(row=>{
+        const sel = row.querySelector('select');
+        const qtyInp = row.querySelector('input[name$="-quantity"]');
+        if(!sel || !sel.value) return;
+        const qty = parseInt(qtyInp.value||'0',10)||0;
+        if(qty<=0) return;
+        const name = sel.options[sel.selectedIndex]?.textContent || 'Produit';
+        entries.push({name, qty});
+      });
+      if(entries.length){
+        summaryEl.innerHTML = '<div class="fw-semibold mb-1">Articles sélectionnés:</div>' +
+          '<ul class="list-unstyled mb-0">' + entries.map(e=>`<li>${e.name} × ${e.qty}</li>`).join('') + '</ul>';
+      } else {
+        summaryEl.innerHTML = '';
+      }
+    }
+    updateCartEmpty();
+  }
+  document.getElementById('cartTable').addEventListener('input', (e)=>{
+    if(e.target.matches('input')) recalc();
+  });
+  // Auto-remplir prix unitaire quand on choisit un produit dans le select
+  document.getElementById('cartTable').addEventListener('change', (e)=>{
+    if(e.target.matches('select')){
+      const pid = e.target.value;
+      const row = e.target.closest('.item-row');
+      const unit = row?.querySelector('input[name$="-unit_price"]');
+      if(pid && unit && Object.prototype.hasOwnProperty.call(productPrices, pid)){
+        unit.value = String(productPrices[pid]).replace(',', '.');
+        unit.setAttribute('readonly','readonly');
+        recalc();
+      }
+    }
+  });
+  // S'assurer que tous les champs prix unitaire sont en lecture seule au chargement
+  document.querySelectorAll('input[name$="-unit_price"]').forEach(inp=>{
+    inp.setAttribute('readonly','readonly');
+  });
+  // Kiosk: + / - / supprimer
+  document.getElementById('cartTable').addEventListener('click', (e)=>{
+    const row = e.target.closest('.item-row'); if(!row) return;
+    if(e.target.closest('.cart-inc')){
+      const qty = row.querySelector('input[name$="-quantity"]');
+      qty.value = (parseInt(qty.value||'0',10)||0) + 1; recalc(); return;
+    }
+    if(e.target.closest('.cart-dec')){
+      const qty = row.querySelector('input[name$="-quantity"]');
+      const v = (parseInt(qty.value||'0',10)||0) - 1; qty.value = v>0? v: 0; recalc(); return;
+    }
+    if(e.target.closest('.cart-del')){
+      const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      if(del){ del.checked = true; row.style.display='none'; }
+      else {
+        const sel = row.querySelector('select'); if(sel) sel.value='';
+        const qty = row.querySelector('input[name$="-quantity"]'); if(qty) qty.value='';
+        const unit = row.querySelector('input[name$="-unit_price"]'); if(unit) unit.value='';
+        row.style.display='none';
+      }
+      recalc();
+    }
+  });
+  // initial
+  recalc();
+  updateCartEmpty();
+
+  // Gestion modale paiement séparée
+  let createdSaleId = null;
+  const paymentModalEl = document.getElementById('paymentModal');
+  const receiptModalEl = document.getElementById('receiptModal');
+  const payMethodSel = document.getElementById('payMethod');
+  const cashSection = document.getElementById('cashSection');
+  const nonCashSection = document.getElementById('nonCashSection');
+  const payTotalSpan = document.getElementById('payTotal');
+  const payError = document.getElementById('payError');
+  const cashGivenEl = document.getElementById('cashGiven');
+  const cashChangeWrap = document.getElementById('cashChange');
+  const cashChangeAmt = document.getElementById('cashChangeAmt');
+  const cashResetBtn = document.getElementById('cashReset');
+  const cashUndoBtn = document.getElementById('cashUndo');
+  let cashHistory = [];
+  let changeHistory = [];
+  function fmtEuro(v){ return (Math.round(v*100)/100).toFixed(2).replace('.', ',') + ' €'; }
+  function updateMethodUI(){
+    const m = payMethodSel.value;
+    const cash = (m === 'CASH');
+    cashSection.classList.toggle('d-none', !cash);
+    nonCashSection.classList.toggle('d-none', cash);
+    document.getElementById('changeSuggestionWrap').style.display = cash ? document.getElementById('cashChange').style.display : 'none';
+  }
+  payMethodSel?.addEventListener('change', updateMethodUI);
+  updateMethodUI();
+  document.getElementById('cashDenoms')?.addEventListener('click', e=>{
+    const btn = e.target.closest('.pay-denom'); if(!btn) return;
+    if(payMethodSel.value !== 'CASH') return;
+    const safe = btn.getAttribute('data-safe');
+    const inp = document.querySelector(`.denom-input[data-safe="${safe}"]`);
+    const current = parseInt(inp.value||'0',10)||0;
+    inp.value = current + 1; btn.querySelector('.denom-count').textContent = inp.value;
+    const badge = btn.querySelector('.denom-count'); if(badge){ badge.style.display = parseInt(inp.value,10)>0? 'inline-block':'none'; }
+    cashHistory.push(safe);
+    recalcCashTender();
+  });
+  function recalcCashTender(){
+    let total = 0;
+    const selectedMap = {};
+    document.querySelectorAll('.denom-input').forEach(inp=>{
+      const safe = inp.getAttribute('data-safe');
+      const denom = safe.replace('_','.');
+      const val = parseFloat(denom); const qty = parseInt(inp.value||'0',10)||0;
+      if(!isNaN(val) && qty>0) { total += val*qty; selectedMap[denom]=qty; }
+    });
+    cashGivenEl.textContent = 'Montant donné: ' + fmtEuro(total);
+    const due = parseFloat((payTotalSpan.dataset.due||'0')); // brut
+    if(total > due){
+      const rendu = total - due; cashChangeWrap.style.display='block'; cashChangeAmt.textContent = fmtEuro(rendu); }
+    else { cashChangeWrap.style.display='none'; cashChangeAmt.textContent = '0,00 €'; }
+    suggestChange(due, total);
+    toggleManualChange(total, due);
+    // Liste espèces données
+    const listWrap = document.getElementById('cashSelectedList');
+    const ul = document.getElementById('cashSelectedUl');
+    if(listWrap && ul){
+      if(Object.keys(selectedMap).length){
+        listWrap.style.display='block';
+        ul.innerHTML = Object.entries(selectedMap)
+          .sort((a,b)=>parseFloat(b[0])-parseFloat(a[0]))
+          .map(([d,q])=>`<li>${d}€ × ${q}</li>`).join('');
+      } else { listWrap.style.display='none'; ul.innerHTML=''; }
+    }
+  }
+  cashResetBtn?.addEventListener('click', ()=>{
+    document.querySelectorAll('.denom-input').forEach(i=>i.value='0');
+    document.querySelectorAll('.pay-denom .denom-count').forEach(c=>{ c.textContent='0'; c.style.display='none'; });
+    cashHistory=[]; recalcCashTender();
+    // reset rendu
+    document.querySelectorAll('.change-denom-input').forEach(i=>i.value='0');
+    document.querySelectorAll('.change-denom .change-count').forEach(c=>{ c.textContent='0'; c.style.display='none'; });
+    changeHistory=[]; recalcManualChange();
+  });
+  cashUndoBtn?.addEventListener('click', ()=>{
+    const last = cashHistory.pop(); if(!last) return;
+    const inp = document.querySelector(`.denom-input[data-safe="${last}"]`);
+    if(inp){ let v = (parseInt(inp.value||'0',10)||0)-1; v = v<0?0:v; inp.value = v; }
+    const badge = document.querySelector(`.pay-denom[data-safe="${last}"] .denom-count`); if(badge){ badge.textContent = inp.value; badge.style.display = parseInt(inp.value,10)>0? 'inline-block':'none'; }
+    recalcCashTender();
+  });
+  function showPayError(msg){ payError.textContent = msg; payError.classList.remove('d-none'); }
+  function hidePayError(){ payError.classList.add('d-none'); }
+
+  // --- SUGGESTION RENDU (utilise stock courant interne) ---
+  const cashCurrentCounts = {{ cash_current_counts|safe }}; // dict denom(str)->int
+
+  function buildAvailableMap(tendered){
+    const avail = {};
+    // copier caisse
+    Object.entries(cashCurrentCounts).forEach(([d, q])=>{ avail[d]=parseInt(q,10)||0; });
+    // ajouter espèces données
+    Object.entries(tendered).forEach(([d,q])=>{ avail[d]=(avail[d]||0)+q; });
+    return avail;
+  }
+  function collectTendered(){
+    const out = {};
+    document.querySelectorAll('.denom-input').forEach(inp=>{
+      const safe = inp.getAttribute('data-safe');
+      const denom = safe.replace('_','.');
+      const qty = parseInt(inp.value||'0',10)||0;
+      if(qty>0) out[denom]=qty;
+    });
+    return out;
+  }
+  // Toutes les dénominations connues pour le greedy (indépendant du stock de session)
+  const ALL_DENOMS = [50, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05];
+
+  function suggestChange(due, tenderTotal){
+    const wrap = document.getElementById('changeSuggestionWrap');
+    const list = document.getElementById('changeSuggestion');
+    const warn = document.getElementById('changePartialWarn');
+    const missSpan = document.getElementById('changeMissing');
+    if(!wrap || !list) return;
+    const change = tenderTotal - due;
+    if(!(change>0) || payMethodSel.value!=='CASH'){ wrap.style.display='none'; return; }
+    wrap.style.display='block'; list.innerHTML=''; warn.classList.add('d-none');
+    // Greedy mathématique sur toutes les dénominations (sans limite de stock)
+    let remaining = Math.round(change * 100); // centimes pour éviter les flottants
+    const breakdown = {};
+    ALL_DENOMS.forEach(d=>{
+      if(remaining<=0) return;
+      const cents = Math.round(d * 100);
+      const use = Math.floor(remaining / cents);
+      if(use>0){ breakdown[String(d)]=use; remaining -= cents*use; }
+    });
+    Object.entries(breakdown).forEach(([denom, qty])=>{
+      const btn = document.querySelector(`.pay-denom[data-denom="${denom}"]`);
+      const imgSrc = btn?.querySelector('img')?.getAttribute('src');
+      const isBill = btn?.classList.contains('bill');
+      const wrapper = document.createElement('div');
+      wrapper.className = 'suggest-denom denom-image-btn ' + (isBill? 'bill':'coin');
+      wrapper.dataset.denom = denom;
+      if(imgSrc){
+        const img = document.createElement('img');
+        img.src = imgSrc; img.alt = denom + '€';
+        wrapper.appendChild(img);
+      } else {
+        const spanTxt = document.createElement('span');
+        spanTxt.textContent = denom + '€';
+        wrapper.appendChild(spanTxt);
+      }
+      const badge = document.createElement('span');
+      badge.className = 'badge change-count';
+      badge.textContent = qty;
+      wrapper.appendChild(badge);
+      list.appendChild(wrapper);
+    });
+    if(Object.keys(breakdown).length===0){
+      list.innerHTML='<span class="text-muted">Aucune coupure adaptée.</span>';
+    }
+    // Avertissement seulement si vraiment non rendu (arrondi centimes)
+    if(remaining > 0){
+      warn.classList.remove('d-none');
+      missSpan.textContent = fmtEuro(remaining / 100);
+    }
+  }
+
+  // --- Gestion saisie manuelle du rendu ---
+  function toggleManualChange(tenderTotal, due){
+    const section = document.getElementById('manualChangeSection');
+    if(!section) return;
+    const expected = tenderTotal - due;
+    if(payMethodSel.value==='CASH' && expected>0){ section.style.display='block'; }
+    else { section.style.display='none'; }
+  }
+  document.getElementById('changeDenoms')?.addEventListener('click', e=>{
+    const btn = e.target.closest('.change-denom'); if(!btn) return;
+    if(payMethodSel.value!=='CASH') return;
+    const safe = btn.getAttribute('data-safe');
+    const inp = document.querySelector(`.change-denom-input[data-safe="${safe}"]`);
+    const current = parseInt(inp.value||'0',10)||0;
+    inp.value = current + 1; btn.querySelector('.change-count').textContent = inp.value;
+    const badge = btn.querySelector('.change-count'); if(badge){ badge.style.display = parseInt(inp.value,10)>0? 'inline-block':'none'; }
+    changeHistory.push(safe);
+    recalcManualChange();
+  });
+  function recalcManualChange(){
+    let total = 0;
+    document.querySelectorAll('.change-denom-input').forEach(inp=>{
+      const safe = inp.getAttribute('data-safe');
+      const denom = safe.replace('_','.');
+      const val = parseFloat(denom); const qty = parseInt(inp.value||'0',10)||0;
+      if(!isNaN(val) && qty>0) total += val*qty;
+    });
+    document.getElementById('manualChangeTotal').textContent = 'Rendu saisi: ' + fmtEuro(total);
+    const due = parseFloat((payTotalSpan.dataset.due||'0'));
+    const tenderTotal = (()=>{ let t=0; document.querySelectorAll('.denom-input').forEach(inp=>{ const d=parseFloat(inp.getAttribute('data-safe').replace('_','.')); const q=parseInt(inp.value||'0',10)||0; if(!isNaN(d)&&q>0) t+=d*q; }); return t; })();
+    const expected = tenderTotal - due;
+    const diffSpan = document.getElementById('manualChangeDiff');
+    const mismatch = document.getElementById('manualChangeMismatch');
+    if(expected>0){
+      const diff = Math.abs(expected - total);
+      if(diff > 0.009){ mismatch.classList.remove('d-none'); diffSpan.textContent = fmtEuro(diff); }
+      else { mismatch.classList.add('d-none'); diffSpan.textContent = '0,00 €'; }
+    } else { mismatch.classList.add('d-none'); diffSpan.textContent='0,00 €'; }
+  }
+  document.getElementById('changeReset')?.addEventListener('click', ()=>{
+    document.querySelectorAll('.change-denom-input').forEach(i=>i.value='0');
+    document.querySelectorAll('.change-denom .change-count').forEach(c=>{ c.textContent='0'; c.style.display='none'; });
+    changeHistory=[]; recalcManualChange();
+  });
+  document.getElementById('changeUndo')?.addEventListener('click', ()=>{
+    const last = changeHistory.pop(); if(!last) return;
+    const inp = document.querySelector(`.change-denom-input[data-safe="${last}"]`);
+    if(inp){ let v=(parseInt(inp.value||'0',10)||0)-1; v=v<0?0:v; inp.value=v; }
+    const badge = document.querySelector(`.change-denom[data-safe="${last}"] .change-count`); if(badge){ badge.textContent = inp.value; badge.style.display = parseInt(inp.value,10)>0? 'inline-block':'none'; }
+    recalcManualChange();
+  });
+  document.getElementById('applySuggestion')?.addEventListener('click', ()=>{
+    // Remplir rendu à partir de suggestion actuelle
+    const suggBadges = document.querySelectorAll('#changeSuggestion .badge');
+    if(!suggBadges.length) return;
+    // Reset d'abord
+    document.getElementById('changeReset')?.click();
+    suggBadges.forEach(b=>{
+      const txt = b.textContent || ''; // format "X€ − N"
+      const match = txt.match(/([0-9]+(?:\.[0-9]+)?)€\s*−\s*(\d+)/);
+      if(!match) return;
+      const denom = match[1]; const qty = parseInt(match[2],10)||0;
+      const safe = denom.replace('.', '_');
+      const inp = document.querySelector(`.change-denom-input[data-safe="${safe}"]`);
+      const btn = document.querySelector(`.change-denom[data-safe="${safe}"]`);
+      if(inp && btn){ inp.value = qty; const badge = btn.querySelector('.change-count'); if(badge){ badge.textContent = String(qty); badge.style.display = qty>0?'inline-block':'none'; } }
+    });
+    recalcManualChange();
+  });
+
+  // Soumission AJAX: 1) créer vente 2) modal paiement 3) encaisser 4) reçu
+  (function(){
+    const form = document.getElementById('saleForm');
+    const receiptBody = document.getElementById('receiptBody');
+    if(!form || !paymentModalEl || !receiptBody) return;
+
+    // Réinitialiser le panier après encaissement
+    function resetCart(){
+      const cartBody = document.getElementById('cartBody');
+      const rows = Array.from(cartBody.querySelectorAll('.item-row'));
+      const totalForms = document.querySelector('#id_items-TOTAL_FORMS');
+      rows.slice(1).forEach(r => r.remove());
+      const first = rows[0];
+      if(first){
+        const sel = first.querySelector('select'); if(sel) sel.value='';
+        const qty = first.querySelector('input[name$="-quantity"]'); if(qty) qty.value='';
+        const unit = first.querySelector('input[name$="-unit_price"]'); if(unit) unit.value='';
+        const del = first.querySelector('input[type="checkbox"][name$="-DELETE"]'); if(del) del.checked=false;
+        first.style.display='';
+        const cell = first.querySelector('.line-total'); if(cell) cell.textContent='0,00 €';
+      }
+      if(totalForms) totalForms.value='1';
+      document.getElementById('sumTotal').textContent='0,00 €';
+      const custSel = form.querySelector('select[name="customer"]'); if(custSel) custSel.value='';
+      const noteEl = form.querySelector('textarea[name="note"]'); if(noteEl) noteEl.value='';
+      const custSearch = document.getElementById('customerSearch'); if(custSearch) custSearch.value='';
+      const sugg = document.getElementById('customerSuggestions'); if(sugg){ sugg.style.display='none'; sugg.innerHTML=''; }
+      cashResetBtn?.click();
+    }
+    const alertBox = document.getElementById('formAlert');
+    function showError(msg){ if(alertBox){ alertBox.textContent = msg || 'Erreur.'; alertBox.classList.remove('d-none'); } }
+    function hideError(){ if(alertBox){ alertBox.classList.add('d-none'); } }
+
+    // Etape 1: validation panier (client + lignes) locale puis ouverture modale
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault(); hideError(); recalc();
+      // Vérif minimale côté client
+      const cust = form.querySelector('select[name="customer"]');
+      if(!cust || !cust.value){ showError('Sélectionnez un client.'); return; }
+      // Calcul total dû
+      const sumTxt = document.getElementById('sumTotal').textContent || '0';
+      const due = parseFloat(sumTxt.replace(/[^0-9.,]/g,'').replace(',','.')) || 0;
+      payTotalSpan.textContent = fmtEuro(due); payTotalSpan.dataset.due = String(due);
+      cashResetBtn?.click(); // remises précédentes effacées
+      hidePayError();
+      const payModal = new bootstrap.Modal(paymentModalEl); payModal.show();
+    });
+
+    // Etape 2: encaissement => POST sale_confirm (création + paiement)
+    document.getElementById('doPay')?.addEventListener('click', async ()=>{
+      hidePayError();
+      const method = payMethodSel.value;
+      // Préparer données vente
+      const fd = new FormData();
+      // Copier tous les champs du formulaire (vente + formset)
+      new FormData(form).forEach((v,k)=>{ fd.append(k,v); });
+      fd.append('method', method);
+      if(method === 'CASH'){
+        document.querySelectorAll('.denom-input').forEach(inp=>{
+          const safe = inp.getAttribute('data-safe');
+          fd.append(`denom_${safe}`, inp.value||'0');
+        });
+        // Ajouter rendu réel
+        document.querySelectorAll('.change-denom-input').forEach(inp=>{
+          const safe = inp.getAttribute('data-safe');
+          fd.append(`change_denom_${safe}`, inp.value||'0');
+        });
+      } else {
+        const otherAmt = parseFloat(document.getElementById('otherAmount')?.value||'0');
+        if(!(otherAmt>0)){ showPayError('Montant invalide.'); return; }
+        fd.append('amount', otherAmt.toFixed(2));
+      }
+      const csrf = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+      const urlConfirm = `{% url 'sale_confirm' %}`;
+      try{
+        const resp = await fetch(urlConfirm, {method:'POST', headers:{'X-Requested-With':'XMLHttpRequest','X-CSRFToken':csrf||''}, body:fd, credentials:'same-origin'});
+        const ct = resp.headers.get('Content-Type')||'';
+        const data = ct.includes('application/json')? await resp.json(): null;
+        if(resp.ok && data && data.ok){
+          const pmInstance = bootstrap.Modal.getInstance(paymentModalEl); pmInstance?.hide();
+          const rInstance = new bootstrap.Modal(receiptModalEl);
+          receiptBody.innerHTML = data.receipt_html || '<div class="small text-muted">Reçu indisponible</div>';
+          rInstance.show();
+          resetCart();
+        } else {
+          showPayError(data?.error || 'Echec encaissement.');
+        }
+      }catch(err){ showPayError('Erreur réseau.'); }
+    });
+  })();
+</script>
+{% endblock %}

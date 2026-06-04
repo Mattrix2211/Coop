@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(C:/Coop1.0/.venv/Scripts/python.exe -c \"import ast; ast.parse\\(open\\('C:/Coop1.0/store/views.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('C:/Coop1.0/store/views.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(py -c \"import ast; ast.parse\\(open\\('C:/Coop1.0/store/views.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")",
+      "Bash(py manage.py check)",
+      "Bash(py manage.py check --deploy)",
+      "Bash(py manage.py runserver 8001 --noreload)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/)",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__read_console_messages",
+      "mcp__Claude_in_Chrome__javascript_tool",
+      "Bash(curl -s http://127.0.0.1:8001/sales/new/)",
+      "PowerShell(Stop-Process -Force)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8001/static/img/placeholder.png)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('C:/Coop1.0/store/views.py'\\).read\\(\\)\\); print\\('OK'\\)\")",
+      "Bash(curl -s \"http://127.0.0.1:8001/sales/34/receipt.pdf\")",
+      "Bash(C:/Coop1.0/.venv/Scripts/python.exe -m pip install reportlab)",
+      "Bash(py -m pip install reportlab --target C:/Coop1.0/.venv/Lib/site-packages)",
+      "Bash(where py *)",
+      "Bash(py --version)",
+      "Bash(py -c \"import sys; print\\(sys.executable\\)\")",
+      "Bash(py -c \"import sys; sys.path.insert\\(0, 'C:/Coop1.0/.venv/Lib/site-packages'\\); import reportlab\")",
+      "Bash(py -m pip install reportlab)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://127.0.0.1:8001/sales/34/receipt.pdf\")",
+      "Bash(curl -s -o /dev/null -w \"PDF:%{http_code} \" \"http://127.0.0.1:8001/sales/34/receipt.pdf\")",
+      "Bash(curl -s -o /dev/null -w \"Clients:%{http_code}\" \"http://127.0.0.1:8001/customers/\")",
+      "Bash(C:/Coop1.0/.venv/Scripts/python.exe manage.py check)",
+      "Bash(C:/Coop1.0/.venv/Scripts/python.exe -c \"import django; print\\(django.__version__\\)\")",
+      "Bash(python manage.py check)",
+      "Bash(python manage.py runserver 8001 --noreload)",
+      "Bash(powershell -c \"Start-Sleep 3; \\(Invoke-WebRequest -Uri 'http://127.0.0.1:8001/' -MaximumRedirection 0 -ErrorAction SilentlyContinue\\).StatusCode\")",
+      "Bash(python -m pip install whitenoise)",
+      "Bash(powershell -c \"\\(Invoke-WebRequest -Uri 'http://127.0.0.1:8001/' -MaximumRedirection 0 -ErrorAction SilentlyContinue\\).StatusCode\")",
+      "PowerShell(gh auth status 2>&1)"
+    ]
+  }
+}

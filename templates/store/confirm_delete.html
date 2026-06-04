@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Supprimer {{ type }} - Coop{% endblock %}
+{% block content %}
+<h3>Supprimer {{ type }}</h3>
+<p>Êtes-vous sûr de vouloir supprimer « {{ object }} » ? Cette action est irréversible.</p>
+<form method="post">
+  {% csrf_token %}
+  <button class="btn btn-danger" type="submit">Supprimer</button>
+  <a class="btn btn-secondary" href="{{ cancel_url }}">Annuler</a>
+</form>
+{% endblock %}
