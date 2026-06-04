@@ -167,20 +167,33 @@
         <input type="hidden" name="reverse_cash" id="reverseCashInput" value="0">
         <div class="modal-body">
           <p class="mb-3">Supprimer la vente <strong id="deleteSaleId">#–</strong> ?</p>
+          <style>
+            .ios-toggle { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 0; border-bottom:1px solid rgba(128,128,128,.15); }
+            .ios-toggle:last-of-type { border-bottom:none; }
+            .ios-toggle-label { flex:1; }
+            .ios-toggle-label .title { font-weight:600; font-size:.9rem; }
+            .ios-toggle-label .desc { font-size:.75rem; color:#6c757d; margin-top:1px; }
+            .ios-switch { position:relative; display:inline-block; width:48px; height:28px; flex-shrink:0; }
+            .ios-switch input { opacity:0; width:0; height:0; }
+            .ios-slider { position:absolute; inset:0; background:#ccc; border-radius:28px; cursor:pointer; transition:background .25s; }
+            .ios-slider:before { content:''; position:absolute; height:22px; width:22px; left:3px; top:3px; background:#fff; border-radius:50%; transition:transform .25s; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+            .ios-switch input:checked + .ios-slider { background:#34c759; }
+            .ios-switch input:checked + .ios-slider:before { transform:translateX(20px); }
+          </style>
           <div class="mb-2 fw-semibold small text-muted">Options :</div>
-          <div class="form-check mb-2">
-            <input class="form-check-input" type="checkbox" id="chkRestoreStock" checked>
-            <label class="form-check-label" for="chkRestoreStock">
-              <i class="bi bi-box-seam me-1 text-success"></i>Remettre les produits en stock
-            </label>
-            <div class="text-muted small ms-4">Les quantités achetées sont réintégrées au catalogue.</div>
+          <div class="ios-toggle">
+            <div class="ios-toggle-label">
+              <div class="title"><i class="bi bi-box-seam me-1 text-success"></i>Remettre les produits en stock</div>
+              <div class="desc">Les quantités achetées sont réintégrées au catalogue.</div>
+            </div>
+            <label class="ios-switch"><input type="checkbox" id="chkRestoreStock" checked><span class="ios-slider"></span></label>
           </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="chkReverseCash" checked>
-            <label class="form-check-label" for="chkReverseCash">
-              <i class="bi bi-cash-coin me-1 text-warning"></i>Annuler les mouvements de caisse
-            </label>
-            <div class="text-muted small ms-4">Le comptage caisse est remis à l'état avant la vente.</div>
+          <div class="ios-toggle mb-3">
+            <div class="ios-toggle-label">
+              <div class="title"><i class="bi bi-cash-coin me-1 text-warning"></i>Annuler les mouvements de caisse</div>
+              <div class="desc">Le comptage caisse est remis à l'état avant la vente.</div>
+            </div>
+            <label class="ios-switch"><input type="checkbox" id="chkReverseCash" checked><span class="ios-slider"></span></label>
           </div>
           <div class="alert alert-warning py-2 small mb-0">
             <i class="bi bi-exclamation-triangle me-1"></i>Action irréversible.
