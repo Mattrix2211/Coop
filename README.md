@@ -6,15 +6,16 @@ Caisse enregistreuse Django pour coopérative. Gestion des ventes, clients, stoc
 
 ## Fonctionnalités
 
-- Kiosk de vente avec grille produits par catégorie
-- Gestion des paiements (espèces avec rendu monnaie, chèque, autre)
-- Historique des ventes et gestion des dettes
-- Catalogue produits avec gestion des stocks
-- Tableau de bord avec statistiques et graphiques
-- Gestion de caisse (fond, remises, mouvements)
-- Exports Excel (ventes, dettes, catalogue)
-- Reçus PDF
+- Kiosk de vente : grille produits par catégorie, overlay quantité +/− directement sur les cartes, recherche rapide
+- Gestion des paiements : espèces avec rendu monnaie automatique, chèque, autre, vente à crédit
+- Historique des ventes avec suppression individuelle (options : remise en stock + annulation caisse)
+- Catalogue produits avec gestion des stocks (ajout, ajustement ±)
+- Tableau de bord avec statistiques, graphiques et alertes stock bas
+- Gestion de caisse : fond, remises, mouvements, comptage par dénomination
+- Exports Excel (ventes, dettes, catalogue, mouvements caisse) et reçus PDF
 - Authentification à deux rôles : **Admin** et **Caissier**
+- Thème clair/sombre avec toggle dans la navbar (mémorisé)
+- Page Réglages utilisateurs simplifiée (sans Django admin)
 
 ---
 
@@ -23,8 +24,8 @@ Caisse enregistreuse Django pour coopérative. Gestion des ventes, clients, stoc
 **Prérequis** : Python 3.11+
 
 ```powershell
-git clone <repo>
-cd Coop1.0
+git clone https://github.com/Mattrix2211/Coop.git
+cd Coop
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -50,7 +51,7 @@ docker-compose up --build -d
 
 L'application est disponible sur `http://localhost:8000/`.
 
-Au premier démarrage, les migrations sont appliquées et les groupes créés automatiquement. Le superuser `admin` (mot de passe `admin123`) est créé s'il n'existe pas — **changez-le immédiatement** via l'admin Django (`/admin/`).
+Au premier démarrage, les migrations sont appliquées et les groupes créés automatiquement. Le superuser `admin` (mot de passe `admin123`) est créé s'il n'existe pas — **changez-le immédiatement** via Réglages → Modifier.
 
 ---
 
@@ -58,14 +59,12 @@ Au premier démarrage, les migrations sont appliquées et les groupes créés au
 
 | Rôle | Accès |
 |------|-------|
-| **Admin** (superuser ou groupe Admin) | Toutes les fonctionnalités, y compris créer/modifier/supprimer produits, catégories, clients, ventes ; vider l'historique |
+| **Admin** (superuser ou groupe Admin) | Toutes les fonctionnalités : créer/modifier/supprimer produits, catégories, clients, ventes ; vider l'historique ; réglages utilisateurs |
 | **Caissier** (groupe Caissier) | Ventes, historique, catalogue (lecture + ajout stock), clients (lecture), caisse, exports |
 
-### Créer un utilisateur
+### Gérer les utilisateurs
 
-1. Connectez-vous avec le compte admin
-2. Allez sur `/admin/` → Utilisateurs → Ajouter
-3. Assignez le groupe `Admin` ou `Caissier`
+Connectez-vous en admin → menu utilisateur (haut droite) → **Réglages utilisateurs**.
 
 ---
 
@@ -88,14 +87,14 @@ Au premier démarrage, les migrations sont appliquées et les groupes créés au
 
 | URL | Description |
 |-----|-------------|
-| `/` | Dashboard (redirige vers la page de connexion si non connecté) |
+| `/` | Dashboard |
 | `/login/` | Page de connexion |
 | `/sales/new/` | Kiosk — nouvelle vente |
 | `/sales/` | Historique des ventes |
 | `/products/` | Catalogue produits |
 | `/customers/` | Liste des clients |
 | `/cash/` | Tableau de bord caisse |
-| `/admin/` | Administration Django |
+| `/settings/users/` | Gestion des utilisateurs (Admin) |
 
 ---
 

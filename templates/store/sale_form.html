@@ -967,6 +967,11 @@
       payTotalSpan.textContent = fmtEuro(due); payTotalSpan.dataset.due = String(due);
       cashResetBtn?.click(); // remises précédentes effacées
       hidePayError();
+      // Réafficher les boutons si masqués par une erreur stock précédente
+      const footer = paymentModalEl.querySelector('.modal-footer');
+      if(footer) footer.style.display = '';
+      const _doPayBtn = document.getElementById('doPay');
+      if(_doPayBtn){ _doPayBtn.disabled = false; _doPayBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i> Encaisser'; }
       const payModal = new bootstrap.Modal(paymentModalEl); payModal.show();
     });
 
@@ -1013,9 +1018,17 @@
           resetCart();
           _paying = false;
         } else {
-          showPayError(data?.error || 'Echec encaissement.');
+          const errMsg = data?.error || 'Echec encaissement.';
+          showPayError(errMsg);
           _paying = false;
-          if(doPayBtn){ doPayBtn.disabled = false; doPayBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i> Encaisser'; }
+          const isStock = errMsg.toLowerCase().includes('stock');
+          if(isStock){
+            // Stock insuffisant : masquer les boutons, impossible de continuer
+            const footer = paymentModalEl.querySelector('.modal-footer');
+            if(footer) footer.style.display = 'none';
+          } else {
+            if(doPayBtn){ doPayBtn.disabled = false; doPayBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i> Encaisser'; }
+          }
         }
       }catch(err){
         showPayError('Erreur réseau.');

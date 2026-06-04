@@ -1,21 +1,22 @@
 # Guide utilisateur — Coop POS
 
-Application de caisse enregistreuse pour coopérative. Ce guide couvre toutes les fonctionnalités accessibles depuis l'interface web.
+Application de caisse enregistreuse pour coopérative.
 
 ---
 
 ## Table des matières
 
 1. [Connexion / Déconnexion](#1-connexion--déconnexion)
-2. [Tableau de bord](#2-tableau-de-bord)
-3. [Faire une vente (kiosk)](#3-faire-une-vente-kiosk)
-4. [Historique des ventes](#4-historique-des-ventes)
-5. [Gérer les dettes](#5-gérer-les-dettes)
-6. [Catalogue produits](#6-catalogue-produits)
-7. [Gérer les clients](#7-gérer-les-clients)
-8. [Caisse](#8-caisse)
-9. [Exports](#9-exports)
-10. [Gestion des comptes (Admin)](#10-gestion-des-comptes-admin)
+2. [Thème clair / sombre](#2-thème-clair--sombre)
+3. [Tableau de bord](#3-tableau-de-bord)
+4. [Faire une vente (kiosk)](#4-faire-une-vente-kiosk)
+5. [Historique des ventes](#5-historique-des-ventes)
+6. [Gérer les dettes](#6-gérer-les-dettes)
+7. [Catalogue produits](#7-catalogue-produits)
+8. [Gérer les clients](#8-gérer-les-clients)
+9. [Caisse](#9-caisse)
+10. [Exports](#10-exports)
+11. [Réglages utilisateurs (Admin)](#11-réglages-utilisateurs-admin)
 
 ---
 
@@ -24,20 +25,24 @@ Application de caisse enregistreuse pour coopérative. Ce guide couvre toutes le
 ### Se connecter
 
 1. Ouvrez l'application dans votre navigateur.
-2. Vous êtes automatiquement redirigé vers la page `/login/`.
-3. Saisissez votre **nom d'utilisateur** et votre **mot de passe**.
-4. Cliquez sur **Se connecter**.
+2. Saisissez votre **nom d'utilisateur** et votre **mot de passe**.
+3. Cliquez sur **Se connecter**.
 
 ### Se déconnecter
 
-1. Cliquez sur votre nom en haut à droite de la barre de navigation.
-2. Cliquez sur **Déconnexion**.
+Cliquez sur votre nom en haut à droite → **Déconnexion**.
 
-> **Rôles** : les utilisateurs ont soit le rôle **Admin** (accès complet) soit le rôle **Caissier** (accès limité). Les boutons et actions non autorisés ne sont pas affichés pour les Caissiers.
+> **Rôles** : **Admin** (accès complet) ou **Caissier** (accès limité). Les boutons et actions non autorisés ne sont pas affichés pour les Caissiers.
 
 ---
 
-## 2. Tableau de bord
+## 2. Thème clair / sombre
+
+Cliquez sur l'icône **lune** ou **soleil** dans la barre de navigation (à droite de votre nom) pour basculer entre le thème clair et sombre. Le choix est mémorisé dans votre navigateur.
+
+---
+
+## 3. Tableau de bord
 
 **URL** : `/` ou `/dashboard/`
 
@@ -53,210 +58,202 @@ Vue d'ensemble de l'activité :
 
 ### Changer la période
 
-Utilisez les boutons **Aujourd'hui / 7 jours / Ce mois / Cette année** ou sélectionnez une plage personnalisée via les champs de date.
+Utilisez les boutons **Jour / Semaine / Mois / Année** ou sélectionnez une plage personnalisée.
 
 ---
 
-## 3. Faire une vente (kiosk)
+## 4. Faire une vente (kiosk)
 
 **URL** : `/sales/new/`
 
 ### Étape 1 — Sélectionner les produits
 
 - Les produits sont affichés en grille, regroupés par catégorie.
-- Cliquez sur un produit pour l'ajouter au panier (quantité 1 par clic).
-- Utilisez la barre de recherche en haut pour filtrer rapidement.
-- Dans le panier (côté droit), modifiez la quantité ou supprimez un article.
+- Cliquez sur une carte pour ajouter l'article au panier.
+- Une fois ajouté, un bandeau bleu apparaît en bas de la carte avec **[−] quantité [+]** — cliquez directement dessus pour ajuster sans toucher au tableau panier.
+- Utilisez la barre de recherche ou les filtres par catégorie pour trouver rapidement un article.
+- Le stock disponible est affiché sous le prix de chaque article.
+- Si un article est en rupture (stock = 0), sa carte est grisée et non cliquable.
 
 ### Étape 2 — Sélectionner le client
 
-- Cliquez sur **Choisir un client** et tapez le nom dans le champ de recherche.
+- Tapez le nom dans le champ **Client** — les suggestions apparaissent immédiatement.
+- Cliquez sur un nom pour le sélectionner. Le champ affiche alors le client et un bouton **×** pour changer.
 - Le client est obligatoire pour valider la vente.
-- Vous pouvez créer un nouveau client directement depuis ce champ.
 
-### Étape 3 — Choisir le mode de paiement
+### Étape 3 — Note (optionnel)
+
+Cliquez sur **Ajouter une note** pour dérouler le champ de note.
+
+### Étape 4 — Valider le panier
+
+Cliquez sur **Valider panier**. La fenêtre de paiement s'ouvre.
+
+### Étape 5 — Paiement
 
 **Espèces** :
-1. Sélectionnez l'onglet **Espèces**.
+1. Sélectionnez **Espèce**.
 2. Cliquez sur les billets/pièces remis par le client.
-3. Le montant encaissé et le rendu monnaie sont calculés automatiquement.
+3. Le montant donné et le rendu monnaie sont calculés automatiquement.
 
 **Chèque ou Autre** :
 1. Sélectionnez l'onglet correspondant.
 2. Saisissez le montant encaissé.
 
-> Laissez le montant à 0 pour enregistrer une vente à crédit (dette).
+**À crédit (dette)** :
+- Cliquez sur **Encaisser** sans entrer aucun montant. La vente est enregistrée avec un solde à régler.
 
-### Étape 4 — Valider
+> Si le stock d'un article est insuffisant au moment d'encaisser, un message d'erreur s'affiche et les boutons de paiement disparaissent — vous devez fermer la fenêtre et corriger le panier.
 
-Cliquez sur **Valider la vente**. Un reçu s'affiche en modale avec le détail de la vente et le rendu monnaie.
+### Étape 6 — Reçu
+
+Le reçu s'affiche automatiquement. Vous pouvez le télécharger en PDF. Le panier est vidé et l'app est prête pour la vente suivante.
+
+### Bouton Vider
+
+Le bouton **Vider** (à gauche de "Valider panier") efface tout le panier en un clic.
 
 ---
 
-## 4. Historique des ventes
+## 5. Historique des ventes
 
 **URL** : `/sales/`
 
-Liste paginée de toutes les ventes avec filtres par client et statut (payé / non payé).
+Liste paginée de toutes les ventes avec filtres par client et statut.
 
 ### Actions disponibles
 
 | Bouton | Description |
 |--------|-------------|
-| **Détails** | Affiche le reçu complet en modale |
-| **Régulariser** | Enregistre un paiement complémentaire (si solde > 0) |
-| **Supprimer** *(Admin)* | Supprime la vente et remet les articles en stock |
-| **Régler les dettes** | Ouvre la sélection de client pour un paiement groupé |
-| **Exporter clients endettés** | Télécharge un fichier Excel des débiteurs |
-| **Vider l'historique** *(Admin)* | Supprime toutes les ventes (irréversible) |
+| **Détails** | Affiche le reçu complet en fenêtre |
+| **Régulariser** | Enregistre un paiement sur une vente impayée |
+| **Régler les dettes** | Paiement groupé sur toutes les dettes d'un client |
+| **Supprimer** *(Admin)* | Supprime la vente avec options |
+| **Vider l'historique** *(Admin)* | Supprime toutes les ventes |
+
+### Supprimer une vente *(Admin)*
+
+En cliquant sur l'icône poubelle, une fenêtre s'ouvre avec deux options (toggles) :
+
+- **Remettre les produits en stock** — les quantités achetées sont réintégrées au catalogue
+- **Annuler les mouvements de caisse** — le comptage caisse revient à l'état avant la vente
+
+Les deux options sont activées par défaut. Décochez selon votre situation.
 
 ---
 
-## 5. Gérer les dettes
+## 6. Gérer les dettes
 
-**URL** : `/debts/` ou depuis l'historique des ventes
+### Régler une dette individuelle
 
-Liste de toutes les ventes avec solde impayé.
+Depuis l'historique → **Régulariser** sur la vente concernée → saisissez le montant et la méthode → **Valider**.
 
-### Régler une dette
+### Règlement groupé par client
 
-**Depuis l'historique** :
-1. Cliquez sur **Régulariser** sur la ligne de la vente concernée.
-2. Saisissez le montant et la méthode de paiement.
-3. Cliquez sur **Valider**.
-
-**Règlement groupé par client** :
-1. Cliquez sur **Régler les dettes** (en haut de la page historique).
-2. Sélectionnez le client dans la liste.
+1. Cliquez sur **Régler les dettes** (en haut de l'historique).
+2. Sélectionnez le client.
 3. Saisissez le montant global et la méthode.
 4. Le système répartit automatiquement du plus ancien au plus récent.
 
 ---
 
-## 6. Catalogue produits
+## 7. Catalogue produits
 
 **URL** : `/products/`
 
 ### Ajouter du stock
 
-1. Sur la ligne du produit, cliquez sur **+ Stock**.
-2. Saisissez la quantité à ajouter.
-3. Cliquez sur **Ajouter**.
+Sur la ligne du produit → **+ Stock** → saisissez la quantité → **Ajouter**.
 
 ### Ajuster le stock manuellement *(Admin)*
 
-Permet d'augmenter ou réduire le stock d'un montant quelconque (correction d'inventaire) :
-
-1. Cliquez sur le menu déroulant (flèche) à droite du produit.
-2. Cliquez sur **Ajuster stock**.
-3. Saisissez le delta (positif pour augmenter, négatif pour réduire) et une note.
-4. Cliquez sur **Appliquer**.
+Menu déroulant → **Ajuster stock** → saisissez le delta (+/−) et une note → **Appliquer**.
 
 ### Créer un produit *(Admin)*
 
-1. Cliquez sur **+ Produit** en haut de page.
-2. Renseignez le nom, la catégorie, le prix, le stock initial et le seuil d'alerte.
-3. Ajoutez une photo (recadrage disponible via l'outil intégré).
-4. Cliquez sur **Enregistrer**.
-
-### Modifier / Supprimer *(Admin)*
-
-Utilisez le menu déroulant sur chaque ligne produit.
+**+ Produit** → renseignez nom, catégorie, prix, stock initial et seuil d'alerte → **Enregistrer**.
 
 ### Gérer les catégories *(Admin)*
 
-Cliquez sur **Catégories** en haut de page pour créer, modifier ou supprimer des catégories.
+Bouton **Catégories** → créer, modifier ou supprimer.
 
-### Historique des mouvements de stock
+### Historique des mouvements
 
-Cliquez sur **Historique stock** dans le menu déroulant d'un produit, ou accédez à `/stocks/movements/`.
+Menu déroulant → **Historique stock** (ou `/stocks/movements/`).
 
 ---
 
-## 7. Gérer les clients
+## 8. Gérer les clients
 
 **URL** : `/customers/`
 
-### Créer un client
-
-Cliquez sur **+ Nouveau client** et renseignez le nom et prénom.
-
-### Fiche client
-
-Cliquez sur le nom d'un client pour voir :
-- Toutes ses ventes
-- Total acheté, total payé, dette totale
-
-### Modifier / Supprimer *(Admin)*
-
-Depuis la liste ou la fiche client.
+- **Créer** : bouton **Nouveau client**
+- **Modifier / Supprimer** *(Admin)* : boutons sur chaque ligne
+- **Fiche client** : cliquez sur le nom pour voir toutes ses ventes, total acheté, dette
 
 ---
 
-## 8. Caisse
+## 9. Caisse
 
 **URL** : `/cash/`
 
 ### Initialiser le fond de caisse
 
-1. Cliquez sur **Initialiser la caisse** (ou **Nouveau fond**).
-2. Saisissez les quantités de chaque billet/pièce présent en caisse.
-3. Cliquez sur **Valider**.
+**Réinitialiser** → saisissez les quantités de chaque billet/pièce → **Valider**.
+
+À faire en début de journée. Ferme l'ancienne session et ouvre une nouvelle.
 
 ### Remise de caisse
 
-Enregistre un retrait d'espèces (versement en banque, etc.) :
-1. Cliquez sur **Remise**.
-2. Saisissez les quantités retirées.
-3. Cliquez sur **Valider**.
+**Remise** → saisissez les billets/pièces retirés → **Valider**.
+
+Enregistre un retrait d'espèces (versement en banque, mise en coffre…).
 
 ### Tableau de bord caisse
 
-Affiche :
-- Le détail des espèces actuellement en caisse (billets et pièces)
-- Le total espèces + chèques
-- Les 25 derniers mouvements
+- **Espèces courantes** : détail par billet/pièce, mis à jour à chaque vente
+- **Chèques** : total des paiements par chèque sur la session
+- **Total global** : espèces + chèques
+- **Mouvements récents** : les 25 derniers mouvements
 
 ---
 
-## 9. Exports
+## 10. Exports
 
 Tous les exports sont au format Excel (`.xlsx`).
 
-| Export | Accès |
-|--------|-------|
-| Ventes | `/exports/sales.xlsx` |
-| Dettes | `/exports/debts.xlsx` |
-| Clients endettés | `/exports/debtors.xlsx` |
-| Catalogue produits | `/exports/products.xlsx` |
-| Mouvements de caisse | `/cash/exports/movements.xlsx` |
+| Export | Bouton |
+|--------|--------|
+| Ventes | Page historique des ventes |
+| Clients endettés | Page historique des ventes |
+| Dettes | Page dettes |
+| Catalogue produits | Page catalogue |
+| Mouvements caisse | Page caisse |
 
-Les boutons d'export sont accessibles depuis les pages correspondantes.
-
-**Reçus PDF** : dans la modale de détail d'une vente, cliquez sur l'icône PDF pour télécharger le ticket au format 80mm.
+**Reçu PDF** : dans la fenêtre de détail d'une vente, cliquez sur **PDF**.
 
 ---
 
-## 10. Gestion des comptes (Admin)
+## 11. Réglages utilisateurs (Admin)
 
-**URL** : `/admin/`
+**URL** : `/settings/users/` — accessible via le menu utilisateur en haut à droite.
 
-Accessible uniquement aux superusers.
+### Créer un utilisateur
 
-### Créer un compte utilisateur
+**Nouvel utilisateur** → renseignez prénom, nom, nom d'utilisateur, mot de passe et rôle → **Créer**.
 
-1. Allez sur `/admin/` → **Utilisateurs** → **Ajouter un utilisateur**.
-2. Saisissez le nom d'utilisateur et le mot de passe.
-3. Dans la section **Permissions**, assignez le groupe **Admin** ou **Caissier**.
-4. Cliquez sur **Enregistrer**.
+### Modifier un utilisateur
 
-### Modifier le mot de passe d'un utilisateur
+**Modifier** → changez le nom, le rôle ou le mot de passe (laisser vide pour ne pas changer) → **Enregistrer**.
 
-1. Allez sur `/admin/` → **Utilisateurs** → cliquez sur l'utilisateur.
-2. Cliquez sur **Ce formulaire** dans la section mot de passe.
-3. Saisissez le nouveau mot de passe et confirmez.
+### Supprimer un utilisateur
 
-### Groupes et permissions
+Icône poubelle → confirmer. Impossible de supprimer son propre compte.
 
-- **Admin** : accès complet (création/modification/suppression de tout, vider l'historique)
-- **Caissier** : ventes, paiements, ajout de stock, exports — pas de suppression ni de création de produits/catégories
+### Rôles disponibles
+
+| Rôle | Description |
+|------|-------------|
+| **Admin** | Accès complet à toutes les fonctionnalités |
+| **Caissier** | Ventes, caisse, catalogue (lecture + ajout stock), exports |
+| **Superadmin** | Comme Admin + accès aux réglages techniques (attribué automatiquement au premier compte) |
