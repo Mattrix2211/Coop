@@ -971,7 +971,12 @@
     });
 
     // Etape 2: encaissement => POST sale_confirm (création + paiement)
+    let _paying = false;
     document.getElementById('doPay')?.addEventListener('click', async ()=>{
+      if(_paying) return; // protection double-clic
+      _paying = true;
+      const doPayBtn = document.getElementById('doPay');
+      if(doPayBtn){ doPayBtn.disabled = true; doPayBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Traitement…'; }
       hidePayError();
       const method = payMethodSel.value;
       // Préparer données vente
@@ -1006,10 +1011,17 @@
           receiptBody.innerHTML = data.receipt_html || '<div class="small text-muted">Reçu indisponible</div>';
           rInstance.show();
           resetCart();
+          _paying = false;
         } else {
           showPayError(data?.error || 'Echec encaissement.');
+          _paying = false;
+          if(doPayBtn){ doPayBtn.disabled = false; doPayBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i> Encaisser'; }
         }
-      }catch(err){ showPayError('Erreur réseau.'); }
+      }catch(err){
+        showPayError('Erreur réseau.');
+        _paying = false;
+        if(doPayBtn){ doPayBtn.disabled = false; doPayBtn.innerHTML = '<i class="bi bi-cash-coin me-1"></i> Encaisser'; }
+      }
     });
   })();
 </script>
