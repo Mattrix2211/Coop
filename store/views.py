@@ -1389,16 +1389,37 @@ def settings_user_delete(request, pk):
 @require_POST
 def sale_delete(request, pk):
 	sale = get_object_or_404(Sale, pk=pk)
-	for item in sale.items.select_related('product').all():
-		Product.objects.filter(pk=item.product_id).update(quantity=F('quantity') + item.quantity)
-		StockMovement.objects.create(
-			product=item.product,
-			change=item.quantity,
-			reason=StockMovement.ADJUST,
-			note=f'Annulation vente #{sale.id}',
-		)
+	restore_stock = request.POST.get('restore_stock') == '1'
+	reverse_cash = request.POST.get('reverse_cash') == '1'
+
+	if restore_stock:
+		for item in sale.items.select_related('product').all():
+			Product.objects.filter(pk=item.product_id).update(quantity=F('quantity') + item.quantity)
+			StockMovement.objects.create(
+				product=item.product,
+				change=item.quantity,
+				reason=StockMovement.ADJUST,
+				note=f'Annulation vente #{sale.id}',
+			)
+
+	if reverse_cash:
+		session = get_active_cash_session()
+		if session:
+			for mvt in CashMovement.objects.filter(sale=sale):
+				if mvt.movement_type == CashMovement.PAYMENT and mvt.tendered_breakdown:
+					adjust_session_counts(session, removed=mvt.tendered_breakdown)
+				elif mvt.movement_type == CashMovement.PAYMENT and mvt.method == 'CHEQUE':
+					adjust_session_counts(session, cheques_delta=-1)
+				elif mvt.movement_type == CashMovement.CHANGE and mvt.change_breakdown:
+					adjust_session_counts(session, added=mvt.change_breakdown)
+		CashMovement.objects.filter(sale=sale).delete()
+
+	parts = []
+	if restore_stock: parts.append('stock remis à jour')
+	if reverse_cash: parts.append('caisse annulée')
+	detail = ' (' + ', '.join(parts) + ')' if parts else ''
 	sale.delete()
-	messages.success(request, f'Vente #{pk} supprimée et stocks remis à jour.')
+	messages.success(request, f'Vente #{pk} supprimée{detail}.')
 	return redirect('sale_list')
 
 

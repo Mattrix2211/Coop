@@ -158,18 +158,33 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title text-danger">Supprimer la vente</h5>
+        <h5 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>Supprimer la vente</h5>
         <button class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="deleteSaleForm" method="post" action="">
         {% csrf_token %}
+        <input type="hidden" name="restore_stock" id="restoreStockInput" value="0">
+        <input type="hidden" name="reverse_cash" id="reverseCashInput" value="0">
         <div class="modal-body">
-          <p>Supprimer la vente <strong id="deleteSaleId">#–</strong> ?</p>
-          <ul class="small text-muted mb-0">
-            <li>Les articles seront remis en stock automatiquement.</li>
-            <li>Les paiements associés seront également supprimés.</li>
-            <li>Action irréversible.</li>
-          </ul>
+          <p class="mb-3">Supprimer la vente <strong id="deleteSaleId">#–</strong> ?</p>
+          <div class="mb-2 fw-semibold small text-muted">Options :</div>
+          <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="chkRestoreStock" checked>
+            <label class="form-check-label" for="chkRestoreStock">
+              <i class="bi bi-box-seam me-1 text-success"></i>Remettre les produits en stock
+            </label>
+            <div class="text-muted small ms-4">Les quantités achetées sont réintégrées au catalogue.</div>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="chkReverseCash" checked>
+            <label class="form-check-label" for="chkReverseCash">
+              <i class="bi bi-cash-coin me-1 text-warning"></i>Annuler les mouvements de caisse
+            </label>
+            <div class="text-muted small ms-4">Le comptage caisse est remis à l'état avant la vente.</div>
+          </div>
+          <div class="alert alert-warning py-2 small mb-0">
+            <i class="bi bi-exclamation-triangle me-1"></i>Action irréversible.
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
@@ -294,12 +309,26 @@
   (function(){
     const modalEl = document.getElementById('deleteSaleModal');
     if(!modalEl) return;
+    const chkStock = document.getElementById('chkRestoreStock');
+    const chkCash = document.getElementById('chkReverseCash');
+    const inpStock = document.getElementById('restoreStockInput');
+    const inpCash = document.getElementById('reverseCashInput');
+    function syncInputs(){
+      if(inpStock) inpStock.value = chkStock?.checked ? '1' : '0';
+      if(inpCash) inpCash.value = chkCash?.checked ? '1' : '0';
+    }
+    chkStock?.addEventListener('change', syncInputs);
+    chkCash?.addEventListener('change', syncInputs);
     modalEl.addEventListener('show.bs.modal', (ev) => {
       const btn = ev.relatedTarget;
       if(!btn) return;
       const id = btn.getAttribute('data-id');
       document.getElementById('deleteSaleId').textContent = '#' + id;
       document.getElementById('deleteSaleForm').action = `/sales/${id}/delete/`;
+      // Reset checkboxes à cochés par défaut
+      if(chkStock) chkStock.checked = true;
+      if(chkCash) chkCash.checked = true;
+      syncInputs();
     });
   })();
 
