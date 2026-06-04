@@ -4,13 +4,13 @@
 {% block title %}Vente - Coop{% endblock %}
 {% block content %}
 <style>
+/* Overlay quantité */
 .product-card { position: relative; overflow: visible; }
 .card-qty-overlay {
   position: absolute; bottom: 0; left: 0; right: 0;
   background: rgba(13,110,253,0.92); color: #fff;
   display: none; align-items: center; justify-content: space-between;
-  padding: 4px 10px; border-radius: 0 0 12px 12px; gap: 6px;
-  z-index: 2;
+  padding: 4px 10px; border-radius: 0 0 12px 12px; gap: 6px; z-index: 2;
 }
 .card-qty-overlay.visible { display: flex; }
 .card-qty-btn {
@@ -22,6 +22,16 @@
 }
 .card-qty-btn:hover { background: rgba(255,255,255,0.45); }
 .card-qty-num { font-weight: 700; font-size: 1rem; min-width: 20px; text-align: center; flex: 1; }
+/* Stock badge */
+.pstock { font-size: .7rem; color: #6c757d; margin-top: 2px; }
+.pstock.low { color: #dc3545; font-weight: 600; }
+/* Animation tap */
+@keyframes cardTap { 0%{transform:scale(1)} 40%{transform:scale(0.93)} 100%{transform:scale(1)} }
+.product-card.card-tap { animation: cardTap 0.15s ease-out; }
+/* Combobox client */
+#customerCombo .list-group-item { font-size: .9rem; padding: .5rem .75rem; cursor: pointer; }
+#customerCombo .list-group-item:hover, #customerCombo .list-group-item.active { background: #0d6efd; color: #fff; border-color: #0d6efd; }
+#customerSearch.selected { font-weight: 600; }
 </style>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="m-0 d-flex align-items-center gap-2">Vente
@@ -89,6 +99,9 @@
               {% endif %}
               <div class="pname">{{ p.name }}</div>
               <div class="pprice">{{ p.price|floatformat:2 }} €</div>
+              <div class="pstock {% if p.quantity <= p.min_stock and p.quantity > 0 %}low{% endif %}">
+                <i class="bi bi-box-seam"></i> {{ p.quantity }}
+              </div>
               {% if p.quantity == 0 %}<div class="sold-out-badge">Rupture</div>{% endif %}
               <div class="card-qty-overlay" id="card-qty-{{ p.id }}">
                 <button type="button" class="card-qty-btn card-qty-dec" data-id="{{ p.id }}">−</button>
@@ -111,19 +124,25 @@
   <form method="post" id="saleForm" class="col-lg-5 col-xl-6">
     <div id="formAlert" class="alert alert-danger py-2 px-3 d-none" role="alert"></div>
     {% csrf_token %}
-    <div class="row g-3 mb-2">
-      <div class="col-md-6">{{ form.customer.label_tag }}
-        <div class="position-relative">
-          <div class="input-group input-group-sm mb-2">
-            <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" id="customerSearch" class="form-control" placeholder="Rechercher un client...">
-          </div>
-          <div id="customerSuggestions" class="list-group shadow-sm position-absolute w-100" style="z-index:1051; max-height:220px; overflow:auto; display:none;"></div>
+    <div class="mb-3">
+      <label class="form-label mb-1 fw-semibold">Client <span class="text-danger">*</span></label>
+      <div class="position-relative" id="customerCombo">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" id="customerSearch" class="form-control" placeholder="Rechercher un client..." autocomplete="off">
+          <button type="button" id="customerClear" class="btn btn-outline-secondary" style="display:none" title="Effacer la sélection"><i class="bi bi-x-lg"></i></button>
         </div>
-        <div id="customerSelected" class="text-success small fw-semibold mb-1" style="display:none;"><i class="bi bi-person-check me-1"></i><span id="customerSelectedName"></span></div>
-        {{ form.customer }}
+        <div id="customerSuggestions" class="list-group shadow position-absolute w-100" style="z-index:1051; max-height:280px; overflow:auto; display:none;"></div>
       </div>
-      <div class="col-md-6">{{ form.note.label_tag }} {{ form.note }}</div>
+      <div style="display:none">{{ form.customer }}</div>
+    </div>
+    <div class="mb-2">
+      <button type="button" class="btn btn-sm btn-link p-0 text-muted text-decoration-none" data-bs-toggle="collapse" data-bs-target="#noteCollapse">
+        <i class="bi bi-pencil-square me-1"></i><span id="noteBtnLabel">Ajouter une note</span>
+      </button>
+      <div class="collapse" id="noteCollapse">
+        <div class="mt-2">{{ form.note }}</div>
+      </div>
     </div>
     
 
@@ -432,55 +451,84 @@
     const card = e.target.closest('.product-card');
     if(!card) return;
     if(card.classList.contains('sold-out')) return;
+    // Animation tap CSS pure (150ms, aucun impact perf)
+    card.classList.remove('card-tap');
+    void card.offsetWidth; // reflow pour reset
+    card.classList.add('card-tap');
+    card.addEventListener('animationend', () => card.classList.remove('card-tap'), { once: true });
     addOrIncrease(card.dataset.id, card.dataset.name, card.dataset.price);
     recalc();
     updateCartEmpty();
   });
 
-  // Recherche client avec suggestions (plus jolie)
+  // Combobox client amélioré
   (function(){
     const input = document.getElementById('customerSearch');
     const select = document.querySelector('select[name="customer"]');
     const sugg = document.getElementById('customerSuggestions');
+    const clearBtn = document.getElementById('customerClear');
     if(!input || !select || !sugg) return;
     let active = -1;
+    let isSelected = false;
+
+    function selectCustomer(value, label){
+      select.value = value;
+      input.value = label;
+      input.classList.add('selected');
+      sugg.style.display = 'none';
+      if(clearBtn) clearBtn.style.display = 'flex';
+      isSelected = true;
+    }
+
+    function clearCustomer(){
+      select.value = '';
+      input.value = '';
+      input.classList.remove('selected');
+      if(clearBtn) clearBtn.style.display = 'none';
+      isSelected = false;
+      input.focus();
+    }
+
+    clearBtn?.addEventListener('click', clearCustomer);
+
     function buildSuggestions(){
+      if(isSelected) return;
       const q = input.value.trim().toLowerCase();
       const opts = Array.from(select.options).filter(o=>o.value);
-      const matches = q? opts.filter(o => (o.textContent||'').toLowerCase().includes(q)) : opts;
+      const matches = q ? opts.filter(o=>(o.textContent||'').toLowerCase().includes(q)) : opts;
       sugg.innerHTML = '';
       active = -1;
-      matches.slice(0,8).forEach((o)=>{
+      if(!matches.length){ sugg.style.display='none'; return; }
+      matches.slice(0,10).forEach(o=>{
         const a = document.createElement('a');
-        a.href = '#'; a.className = 'list-group-item list-group-item-action';
-        a.textContent = o.textContent;
+        a.href='#'; a.className='list-group-item list-group-item-action';
+        // Highlight la portion recherchée
+        if(q){
+          const txt = o.textContent;
+          const idx = txt.toLowerCase().indexOf(q);
+          if(idx>=0){
+            a.innerHTML = txt.substring(0,idx) + '<strong>' + txt.substring(idx,idx+q.length) + '</strong>' + txt.substring(idx+q.length);
+          } else { a.textContent = txt; }
+        } else { a.textContent = o.textContent; }
         a.dataset.value = o.value;
-        a.addEventListener('click', (ev)=>{
-      ev.preventDefault();
-      select.value = o.value;
-      sugg.style.display='none';
-      const nameEl = document.getElementById('customerSelectedName');
-      const selEl = document.getElementById('customerSelected');
-      if(nameEl) nameEl.textContent = o.textContent;
-      if(selEl) selEl.style.display = 'block';
-    });
+        a.dataset.label = o.textContent;
+        a.addEventListener('mousedown', ev=>{ ev.preventDefault(); selectCustomer(o.value, o.textContent); });
         sugg.appendChild(a);
       });
-      sugg.style.display = matches.length? 'block' : 'none';
+      sugg.style.display = 'block';
     }
-    input.addEventListener('input', buildSuggestions);
+
+    input.addEventListener('input', ()=>{ isSelected=false; input.classList.remove('selected'); if(clearBtn) clearBtn.style.display='none'; buildSuggestions(); });
     input.addEventListener('focus', buildSuggestions);
-    input.addEventListener('keydown', (e)=>{
+    input.addEventListener('keydown', e=>{
       const items = Array.from(sugg.querySelectorAll('.list-group-item'));
-      if(e.key==='ArrowDown'){ e.preventDefault(); active = Math.min(active+1, items.length-1); }
-      else if(e.key==='ArrowUp'){ e.preventDefault(); active = Math.max(active-1, 0); }
-      else if(e.key==='Enter'){ if(active>=0 && items[active]){ e.preventDefault(); items[active].click(); } }
+      if(e.key==='ArrowDown'){ e.preventDefault(); active=Math.min(active+1,items.length-1); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); active=Math.max(active-1,0); }
+      else if(e.key==='Enter' && active>=0 && items[active]){ e.preventDefault(); const a=items[active]; selectCustomer(a.dataset.value, a.dataset.label); return; }
       else if(e.key==='Escape'){ sugg.style.display='none'; return; }
-      items.forEach((el,i)=>{ el.classList.toggle('active', i===active); });
+      items.forEach((el,i)=>el.classList.toggle('active', i===active));
     });
-    document.addEventListener('click', (e)=>{
-      if(!sugg.contains(e.target) && e.target !== input){ sugg.style.display='none'; }
-    });
+    document.addEventListener('click', e=>{ if(!sugg.contains(e.target) && e.target!==input && e.target!==clearBtn){ sugg.style.display='none'; } });
   })();
 
   // Calculs automatiques (total et totaux par ligne)
@@ -888,9 +936,10 @@
       document.getElementById('sumTotal').textContent='0,00 €';
       const custSel = form.querySelector('select[name="customer"]'); if(custSel) custSel.value='';
       const noteEl = form.querySelector('textarea[name="note"]'); if(noteEl) noteEl.value='';
-      const custSearch = document.getElementById('customerSearch'); if(custSearch) custSearch.value='';
+      const custSearch = document.getElementById('customerSearch');
+      if(custSearch){ custSearch.value=''; custSearch.classList.remove('selected'); }
+      const clearBtn = document.getElementById('customerClear'); if(clearBtn) clearBtn.style.display='none';
       const sugg = document.getElementById('customerSuggestions'); if(sugg){ sugg.style.display='none'; sugg.innerHTML=''; }
-      const selEl = document.getElementById('customerSelected'); if(selEl) selEl.style.display='none';
       clearAllOverlays();
       cashResetBtn?.click();
     }
