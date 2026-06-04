@@ -290,6 +290,36 @@ body.page-leave { animation: pageFadeOut .18s ease forwards; }
 .denom-icon.bill.small, .denom-icon.coin.small { width:14px; height:14px; margin-right:4px; vertical-align:middle; }
 ul.list-unstyled.small li { display:flex; align-items:center; gap:4px; }
 
+/* Overlay quantité panier sur les cartes kiosk */
+.product-card { position: relative; }
+.card-qty-overlay {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: rgba(13,110,253,0.90);
+  color: #fff;
+  display: none !important;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  border-radius: 0 0 12px 12px;
+  gap: 6px;
+  backdrop-filter: blur(2px);
+}
+.card-qty-overlay.visible { display: flex !important; }
+.card-qty-btn {
+  background: rgba(255,255,255,0.25);
+  border: none; color: #fff;
+  border-radius: 50%;
+  width: 26px; height: 26px;
+  font-size: 1.1rem; font-weight: 700;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; flex-shrink: 0;
+  transition: background .15s;
+}
+.card-qty-btn:hover { background: rgba(255,255,255,0.45); }
+.card-qty-num { font-weight: 700; font-size: 1rem; min-width: 20px; text-align: center; flex: 1; }
+
 /* Produits en rupture */
 .product-card.sold-out { opacity:.45; pointer-events:none; filter:grayscale(40%); position:relative; }
 .product-card .sold-out-badge { position:absolute; top:4px; left:4px; background:#dc3545; color:#fff; font-size:.6rem; padding:2px 6px; border-radius:4px; letter-spacing:.5px; font-weight:600; }

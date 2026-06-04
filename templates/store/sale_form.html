@@ -3,6 +3,26 @@
 {% load l10n %}
 {% block title %}Vente - Coop{% endblock %}
 {% block content %}
+<style>
+.product-card { position: relative; overflow: visible; }
+.card-qty-overlay {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: rgba(13,110,253,0.92); color: #fff;
+  display: none; align-items: center; justify-content: space-between;
+  padding: 4px 10px; border-radius: 0 0 12px 12px; gap: 6px;
+  z-index: 2;
+}
+.card-qty-overlay.visible { display: flex; }
+.card-qty-btn {
+  background: rgba(255,255,255,0.25); border: none; color: #fff;
+  border-radius: 50%; width: 26px; height: 26px;
+  font-size: 1.1rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1; flex-shrink: 0; transition: background .15s;
+}
+.card-qty-btn:hover { background: rgba(255,255,255,0.45); }
+.card-qty-num { font-weight: 700; font-size: 1rem; min-width: 20px; text-align: center; flex: 1; }
+</style>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="m-0 d-flex align-items-center gap-2">Vente
     <button type="button" class="btn btn-link p-0 text-muted" data-bs-toggle="modal" data-bs-target="#helpModal" title="Aide"><i class="bi bi-info-circle fs-5"></i></button>
@@ -70,6 +90,11 @@
               <div class="pname">{{ p.name }}</div>
               <div class="pprice">{{ p.price|floatformat:2 }} €</div>
               {% if p.quantity == 0 %}<div class="sold-out-badge">Rupture</div>{% endif %}
+              <div class="card-qty-overlay" id="card-qty-{{ p.id }}">
+                <button type="button" class="card-qty-btn card-qty-dec" data-id="{{ p.id }}">−</button>
+                <span class="card-qty-num">1</span>
+                <button type="button" class="card-qty-btn card-qty-inc" data-id="{{ p.id }}">+</button>
+              </div>
             </div>
           {% endfor %}
           </div>
@@ -95,6 +120,7 @@
           </div>
           <div id="customerSuggestions" class="list-group shadow-sm position-absolute w-100" style="z-index:1051; max-height:220px; overflow:auto; display:none;"></div>
         </div>
+        <div id="customerSelected" class="text-success small fw-semibold mb-1" style="display:none;"><i class="bi bi-person-check me-1"></i><span id="customerSelectedName"></span></div>
         {{ form.customer }}
       </div>
       <div class="col-md-6">{{ form.note.label_tag }} {{ form.note }}</div>
@@ -142,7 +168,8 @@
           <div class="d-flex gap-4">
             <div><div class="text-muted">Total</div><div class="fw-bold display-6" id="sumTotal">0,00 €</div></div>
           </div>
-          <div class="ms-auto">
+          <div class="d-flex gap-2 ms-auto">
+            <button type="button" id="clearCartBtn" class="btn btn-outline-danger" title="Vider le panier"><i class="bi bi-trash me-1"></i> Vider</button>
             <button class="btn btn-success btn-lg px-4" type="submit" id="saleSubmit"><i class="bi bi-check2-circle me-1"></i> Valider panier</button>
           </div>
         </div>
@@ -253,10 +280,25 @@
   const productPrices = {};
   document.querySelectorAll('#productGrid .product-card').forEach(card => {
     if(card.dataset.id) {
-      // s'assurer que le séparateur décimal est un point pour les inputs type=number
       productPrices[card.dataset.id] = String(card.dataset.price).replace(',', '.');
     }
   });
+
+  // Suivi des quantités par produit pour synchroniser les overlays de cartes
+  const cartQtyMap = {};
+
+  function syncCardOverlay(productId) {
+    const qty = cartQtyMap[productId] || 0;
+    const overlay = document.getElementById('card-qty-' + productId);
+    if (!overlay) return;
+    const numEl = overlay.querySelector('.card-qty-num');
+    if (numEl) numEl.textContent = qty;
+    overlay.classList.toggle('visible', qty > 0);
+  }
+
+  function clearAllOverlays() {
+    Object.keys(cartQtyMap).forEach(id => { cartQtyMap[id] = 0; syncCardOverlay(id); });
+  }
 
   // Filtrage du catalogue
   const searchInput = document.getElementById('productSearch');
@@ -336,8 +378,9 @@
       if(select && select.value == String(productId)){
         const qty = row.querySelector('input[name$="-quantity"]');
         qty.value = (parseInt(qty.value||'0',10) || 0) + 1;
+        cartQtyMap[productId] = parseInt(qty.value, 10);
+        syncCardOverlay(productId);
         const unit = row.querySelector('input[name$="-unit_price"]');
-        // si le prix n'est pas encore rempli (cas virgule/invalid), le fixer
         if(unit && !unit.value){ unit.value = priceNorm; unit.setAttribute('readonly','readonly'); }
         return;
       }
@@ -353,6 +396,8 @@
         unit.value = priceNorm;
         unit.setAttribute('readonly','readonly');
         row.style.display = '';
+        cartQtyMap[productId] = 1;
+        syncCardOverlay(productId);
         return;
       }
     }
@@ -379,6 +424,8 @@
     const unit = clone.querySelector('input[name$="-unit_price"]');
     unit.value = priceNorm;
     unit.setAttribute('readonly','readonly');
+    cartQtyMap[productId] = 1;
+    syncCardOverlay(productId);
   }
 
   grid?.addEventListener('click', (e)=>{
@@ -408,7 +455,15 @@
         a.href = '#'; a.className = 'list-group-item list-group-item-action';
         a.textContent = o.textContent;
         a.dataset.value = o.value;
-        a.addEventListener('click', (ev)=>{ ev.preventDefault(); select.value = o.value; sugg.style.display='none'; });
+        a.addEventListener('click', (ev)=>{
+      ev.preventDefault();
+      select.value = o.value;
+      sugg.style.display='none';
+      const nameEl = document.getElementById('customerSelectedName');
+      const selEl = document.getElementById('customerSelected');
+      if(nameEl) nameEl.textContent = o.textContent;
+      if(selEl) selEl.style.display = 'block';
+    });
         sugg.appendChild(a);
       });
       sugg.style.display = matches.length? 'block' : 'none';
@@ -496,22 +551,29 @@
   document.querySelectorAll('input[name$="-unit_price"]').forEach(inp=>{
     inp.setAttribute('readonly','readonly');
   });
-  // Kiosk: + / - / supprimer
+  // Kiosk: + / - / supprimer (tableau panier)
   document.getElementById('cartTable').addEventListener('click', (e)=>{
     const row = e.target.closest('.item-row'); if(!row) return;
+    const sel = row.querySelector('select');
+    const pid = sel ? sel.value : null;
     if(e.target.closest('.cart-inc')){
       const qty = row.querySelector('input[name$="-quantity"]');
-      qty.value = (parseInt(qty.value||'0',10)||0) + 1; recalc(); return;
+      qty.value = (parseInt(qty.value||'0',10)||0) + 1;
+      if(pid){ cartQtyMap[pid] = parseInt(qty.value,10); syncCardOverlay(pid); }
+      recalc(); return;
     }
     if(e.target.closest('.cart-dec')){
       const qty = row.querySelector('input[name$="-quantity"]');
-      const v = (parseInt(qty.value||'0',10)||0) - 1; qty.value = v>0? v: 0; recalc(); return;
+      const v = (parseInt(qty.value||'0',10)||0) - 1; qty.value = v>0? v: 0;
+      if(pid){ cartQtyMap[pid] = v>0? v: 0; syncCardOverlay(pid); }
+      recalc(); return;
     }
     if(e.target.closest('.cart-del')){
+      if(pid){ cartQtyMap[pid] = 0; syncCardOverlay(pid); }
       const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
       if(del){ del.checked = true; row.style.display='none'; }
       else {
-        const sel = row.querySelector('select'); if(sel) sel.value='';
+        if(sel) sel.value='';
         const qty = row.querySelector('input[name$="-quantity"]'); if(qty) qty.value='';
         const unit = row.querySelector('input[name$="-unit_price"]'); if(unit) unit.value='';
         row.style.display='none';
@@ -519,6 +581,56 @@
       recalc();
     }
   });
+
+  // Boutons +/− directement sur les cartes produit
+  document.getElementById('productGrid').addEventListener('click', (e)=>{
+    const decBtn = e.target.closest('.card-qty-dec');
+    const incBtn = e.target.closest('.card-qty-inc');
+    if(!decBtn && !incBtn) return;
+    e.stopPropagation();
+    const pid = (decBtn || incBtn).dataset.id;
+    if(incBtn){
+      addOrIncrease(pid, '', productPrices[pid] || '0');
+      recalc(); updateCartEmpty();
+    } else {
+      // Décrémenter
+      const rows = Array.from(document.querySelectorAll('#cartBody .item-row'));
+      for(const row of rows){
+        const s = row.querySelector('select');
+        if(s && s.value == pid){
+          const qty = row.querySelector('input[name$="-quantity"]');
+          const v = (parseInt(qty.value||'0',10)||0) - 1;
+          if(v <= 0){
+            // supprimer la ligne
+            const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+            if(del){ del.checked = true; row.style.display='none'; }
+            else { s.value=''; qty.value=''; const u=row.querySelector('input[name$="-unit_price"]'); if(u) u.value=''; row.style.display='none'; }
+            cartQtyMap[pid] = 0;
+          } else {
+            qty.value = v;
+            cartQtyMap[pid] = v;
+          }
+          syncCardOverlay(pid);
+          recalc(); updateCartEmpty();
+          break;
+        }
+      }
+    }
+  });
+  // Bouton Vider le panier
+  document.getElementById('clearCartBtn')?.addEventListener('click', ()=>{
+    const rows = Array.from(document.querySelectorAll('#cartBody .item-row'));
+    rows.forEach(row=>{
+      const sel = row.querySelector('select');
+      const pid = sel?.value;
+      if(pid){ cartQtyMap[pid] = 0; syncCardOverlay(pid); }
+      const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      if(del){ del.checked = true; row.style.display='none'; }
+      else { if(sel) sel.value=''; const q=row.querySelector('input[name$="-quantity"]'); if(q) q.value=''; const u=row.querySelector('input[name$="-unit_price"]'); if(u) u.value=''; row.style.display='none'; }
+    });
+    recalc(); updateCartEmpty();
+  });
+
   // initial
   recalc();
   updateCartEmpty();
@@ -778,6 +890,8 @@
       const noteEl = form.querySelector('textarea[name="note"]'); if(noteEl) noteEl.value='';
       const custSearch = document.getElementById('customerSearch'); if(custSearch) custSearch.value='';
       const sugg = document.getElementById('customerSuggestions'); if(sugg){ sugg.style.display='none'; sugg.innerHTML=''; }
+      const selEl = document.getElementById('customerSelected'); if(selEl) selEl.style.display='none';
+      clearAllOverlays();
       cashResetBtn?.click();
     }
     const alertBox = document.getElementById('formAlert');
