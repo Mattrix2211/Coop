@@ -300,7 +300,7 @@ def sale_confirm(request):
 					if use > 0:
 						change_breakdown[denom_str] = use
 						remaining -= denom * use
-			record_payment_movement(payment, tendered_breakdown=tendered_breakdown if method == Payment.CASH else None, change_breakdown=change_breakdown if change_amount > 0 else None, change_amount=change_amount if change_amount > 0 else None)
+		record_payment_movement(payment, tendered_breakdown=tendered_breakdown if method == Payment.CASH else None, change_breakdown=change_breakdown if change_amount > 0 else None, change_amount=change_amount if change_amount > 0 else None)
 	# Construire reçu
 	cash_added_by_payment = {}
 	cash_change_breakdowns = []
