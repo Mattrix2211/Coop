@@ -414,6 +414,9 @@
         const unit = row.querySelector('input[name$="-unit_price"]');
         unit.value = priceNorm;
         unit.setAttribute('readonly','readonly');
+        // S'assurer que la ligne n'est pas marquée DELETE
+        const delChk = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if(delChk) delChk.checked = false;
         row.style.display = '';
         cartQtyMap[productId] = 1;
         syncCardOverlay(productId);
@@ -672,9 +675,14 @@
       const sel = row.querySelector('select');
       const pid = sel?.value;
       if(pid){ cartQtyMap[pid] = 0; syncCardOverlay(pid); }
+      // Vider les valeurs dans tous les cas
+      if(sel) sel.value = '';
+      const q = row.querySelector('input[name$="-quantity"]'); if(q) q.value = '';
+      const u = row.querySelector('input[name$="-unit_price"]'); if(u) u.value = '';
+      // Cocher DELETE si disponible, sinon juste cacher
       const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-      if(del){ del.checked = true; row.style.display='none'; }
-      else { if(sel) sel.value=''; const q=row.querySelector('input[name$="-quantity"]'); if(q) q.value=''; const u=row.querySelector('input[name$="-unit_price"]'); if(u) u.value=''; row.style.display='none'; }
+      if(del) del.checked = true;
+      row.style.display = 'none';
     });
     recalc(); updateCartEmpty();
   });
