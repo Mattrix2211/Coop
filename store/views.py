@@ -678,7 +678,7 @@ def export_sales_xlsx(request):
 	ws.title = "Ventes"
 	ws.append(["ID", "Date", "Client", "Total", "Payé", "Solde"])
 	for s in Sale.objects.select_related("customer").prefetch_related('items', 'payments').order_by("-created_at"):
-		ws.append([s.id, s.created_at, str(s.customer or ""), float(s.total), float(s.amount_paid), float(s.balance)])
+		ws.append([s.id, s.created_at.replace(tzinfo=None), str(s.customer or ""), float(s.total), float(s.amount_paid), float(s.balance)])
 	for i in range(1, 7):
 		ws.column_dimensions[get_column_letter(i)].width = 18
 	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -699,7 +699,7 @@ def export_debts_xlsx(request):
 	ws.append(["Vente ID", "Date", "Client", "Total", "Payé", "Solde"])
 	for s in Sale.objects.select_related("customer").prefetch_related('items', 'payments').order_by("-created_at"):
 		if s.balance > 0:
-			ws.append([s.id, s.created_at, str(s.customer or ""), float(s.total), float(s.amount_paid), float(s.balance)])
+			ws.append([s.id, s.created_at.replace(tzinfo=None), str(s.customer or ""), float(s.total), float(s.amount_paid), float(s.balance)])
 	for i in range(1, 7):
 		ws.column_dimensions[get_column_letter(i)].width = 18
 	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -1303,7 +1303,7 @@ def export_cash_movements_xlsx(request):
 	ws.title = 'Mouvements caisse'
 	ws.append(['ID', 'Date', 'Type', 'Méthode', 'Montant', 'Note'])
 	for m in session.movements.all().order_by('-created_at'):
-		ws.append([m.id, m.created_at, m.get_movement_type_display(), m.get_method_display() if m.method else '', float(m.amount), m.note or ''])
+		ws.append([m.id, m.created_at.replace(tzinfo=None), m.get_movement_type_display(), m.get_method_display() if m.method else '', float(m.amount), m.note or ''])
 	for i in range(1, 7):
 		ws.column_dimensions[get_column_letter(i)].width = 20
 	response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
