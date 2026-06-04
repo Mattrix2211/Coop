@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}Réglages utilisateurs – Coop{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="m-0">Réglages utilisateurs</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createUserModal">
+    <i class="bi bi-person-plus me-1"></i> Nouvel utilisateur
+  </button>
+</div>
+
+<div class="table-responsive border rounded-3 overflow-hidden shadow-sm">
+  <table class="table table-striped align-middle mb-0">
+    <thead>
+      <tr>
+        <th>Nom d'utilisateur</th>
+        <th>Nom complet</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td><strong>{{ u.username }}</strong></td>
+        <td>{{ u.get_full_name|default:"—" }}</td>
+        <td>
+          {% if u.is_superuser %}
+            <span class="badge bg-danger">Superadmin</span>
+          {% elif u.groups.all %}
+            {% for g in u.groups.all %}<span class="badge bg-secondary">{{ g.name }}</span>{% endfor %}
+          {% else %}
+            <span class="text-muted small">Aucun</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.is_active %}<span class="badge bg-success">Actif</span>{% else %}<span class="badge bg-secondary">Inactif</span>{% endif %}
+        </td>
+        <td class="text-end">
+          <button class="btn btn-sm btn-outline-secondary edit-user-btn"
+            data-bs-toggle="modal" data-bs-target="#editUserModal"
+            data-id="{{ u.id }}"
+            data-username="{{ u.username }}"
+            data-firstname="{{ u.first_name }}"
+            data-lastname="{{ u.last_name }}"
+            data-group="{% for g in u.groups.all %}{{ g.id }}{% endfor %}">
+            <i class="bi bi-pencil"></i> Modifier
+          </button>
+          {% if u != request.user %}
+          <button class="btn btn-sm btn-outline-danger delete-user-btn"
+            data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+            data-id="{{ u.id }}"
+            data-username="{{ u.username }}">
+            <i class="bi bi-trash"></i>
+          </button>
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" class="text-center text-muted">Aucun utilisateur</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal création -->
+<div class="modal fade" id="createUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-person-plus me-2"></i>Nouvel utilisateur</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" action="{% url 'settings_user_create' %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="first_name" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nom</label>
+              <input type="text" name="last_name" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nom d'utilisateur <span class="text-danger">*</span></label>
+              <input type="text" name="username" class="form-control" required autocomplete="off">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+              <input type="password" name="password" class="form-control" required autocomplete="new-password">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Rôle</label>
+              <select name="group" class="form-select">
+                <option value="">— Aucun —</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}">{{ g.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal modification -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-pencil me-2"></i>Modifier l'utilisateur</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editUserForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-2 text-muted small">Compte : <strong id="editUsername"></strong></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Prénom</label>
+              <input type="text" name="first_name" id="editFirstName" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Nom</label>
+              <input type="text" name="last_name" id="editLastName" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Rôle</label>
+              <select name="group" id="editGroup" class="form-select">
+                <option value="">— Aucun —</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}">{{ g.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Nouveau mot de passe <span class="text-muted small">(laisser vide pour ne pas changer)</span></label>
+              <input type="password" name="password" class="form-control" autocomplete="new-password">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal suppression -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger"><i class="bi bi-trash me-2"></i>Supprimer l'utilisateur</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="deleteUserForm" method="post" action="">
+        {% csrf_token %}
+        <div class="modal-body">
+          Supprimer le compte <strong id="deleteUsername"></strong> ? Cette action est irréversible.
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-danger">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('editUserModal').addEventListener('show.bs.modal', function(e){
+    const btn = e.relatedTarget;
+    if(!btn) return;
+    document.getElementById('editUsername').textContent = btn.dataset.username;
+    document.getElementById('editFirstName').value = btn.dataset.firstname;
+    document.getElementById('editLastName').value = btn.dataset.lastname;
+    document.getElementById('editGroup').value = btn.dataset.group || '';
+    document.getElementById('editUserForm').action = `/settings/users/${btn.dataset.id}/update/`;
+  });
+  document.getElementById('deleteUserModal').addEventListener('show.bs.modal', function(e){
+    const btn = e.relatedTarget;
+    if(!btn) return;
+    document.getElementById('deleteUsername').textContent = btn.dataset.username;
+    document.getElementById('deleteUserForm').action = `/settings/users/${btn.dataset.id}/delete/`;
+  });
+</script>
+{% endblock %}

@@ -52,6 +52,12 @@ urlpatterns = [
     path('exports/debtors.xlsx', views.export_debtors_xlsx, name='export_debtors_xlsx'),
     path('exports/products.xlsx', views.export_products_xlsx, name='export_products_xlsx'),
 
+    # Réglages
+    path('settings/users/', views.settings_users, name='settings_users'),
+    path('settings/users/create/', views.settings_user_create, name='settings_user_create'),
+    path('settings/users/<int:pk>/update/', views.settings_user_update, name='settings_user_update'),
+    path('settings/users/<int:pk>/delete/', views.settings_user_delete, name='settings_user_delete'),
+
     # Caisse
     path('cash/', views.cash_dashboard, name='cash_dashboard'),
     path('cash/reset/', views.cash_reset, name='cash_reset'),

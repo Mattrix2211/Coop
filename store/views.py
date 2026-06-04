@@ -15,6 +15,7 @@ from django.utils import timezone
 from django.conf import settings
 import os
 
+from django.contrib.auth.models import User, Group
 from .decorators import admin_required
 
 DENOMINATIONS = [
@@ -1309,6 +1310,78 @@ def export_cash_movements_xlsx(request):
 	response['Content-Disposition'] = 'attachment; filename="mouvements_caisse.xlsx"'
 	wb.save(response)
 	return response
+
+
+# ---- Réglages utilisateurs ----
+
+@admin_required
+def settings_users(request):
+    users = User.objects.prefetch_related('groups').order_by('username')
+    groups = Group.objects.all()
+    return render(request, 'store/settings_users.html', {'users': users, 'groups': groups})
+
+
+@admin_required
+@require_POST
+@transaction.atomic
+def settings_user_create(request):
+    username = request.POST.get('username', '').strip()
+    password = request.POST.get('password', '').strip()
+    group_id = request.POST.get('group', '')
+    first_name = request.POST.get('first_name', '').strip()
+    last_name = request.POST.get('last_name', '').strip()
+    if not username or not password:
+        messages.error(request, 'Nom d\'utilisateur et mot de passe requis.')
+        return redirect('settings_users')
+    if User.objects.filter(username=username).exists():
+        messages.error(request, f'Le nom d\'utilisateur « {username} » est déjà utilisé.')
+        return redirect('settings_users')
+    user = User.objects.create_user(username=username, password=password, first_name=first_name, last_name=last_name)
+    if group_id:
+        try:
+            user.groups.set([Group.objects.get(pk=group_id)])
+        except Group.DoesNotExist:
+            pass
+    messages.success(request, f'Utilisateur « {username} » créé.')
+    return redirect('settings_users')
+
+
+@admin_required
+@require_POST
+@transaction.atomic
+def settings_user_update(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    first_name = request.POST.get('first_name', '').strip()
+    last_name = request.POST.get('last_name', '').strip()
+    group_id = request.POST.get('group', '')
+    password = request.POST.get('password', '').strip()
+    user.first_name = first_name
+    user.last_name = last_name
+    if password:
+        user.set_password(password)
+    user.save()
+    if group_id:
+        try:
+            user.groups.set([Group.objects.get(pk=group_id)])
+        except Group.DoesNotExist:
+            user.groups.clear()
+    else:
+        user.groups.clear()
+    messages.success(request, f'Utilisateur « {user.username} » mis à jour.')
+    return redirect('settings_users')
+
+
+@admin_required
+@require_POST
+def settings_user_delete(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    if user == request.user:
+        messages.error(request, 'Vous ne pouvez pas supprimer votre propre compte.')
+        return redirect('settings_users')
+    username = user.username
+    user.delete()
+    messages.success(request, f'Utilisateur « {username} » supprimé.')
+    return redirect('settings_users')
 
 
 @admin_required
