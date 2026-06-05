@@ -187,6 +187,13 @@ def customer_delete(request, pk):
 	messages.success(request, f"Client « {name} » supprimé.")
 	return redirect("customer_list")
 
+@admin_required
+@require_POST
+def customer_delete_all(request):
+	count, _ = Customer.objects.all().delete()
+	messages.success(request, f"{count} client(s) supprimé(s).")
+	return redirect("customer_list")
+
 def _build_denom_entries():
 	"""Construit la liste des dénominations avec l'image disponible (.png prioritaire puis .svg)."""
 	entries = []

@@ -28,6 +28,7 @@ urlpatterns = [
     # Clients
     path('customers/', views.customer_list, name='customer_list'),
     path('customers/new/', views.customer_create, name='customer_create'),
+    path('customers/delete-all/', views.customer_delete_all, name='customer_delete_all'),
     path('customers/<int:pk>/', views.customer_detail, name='customer_detail'),
     path('customers/<int:pk>/edit/', views.customer_update, name='customer_update'),
     path('customers/<int:pk>/delete/', views.customer_delete, name='customer_delete'),
