@@ -965,8 +965,8 @@ def dashboard(request):
 	start_year = start_day.replace(month=1, day=1)
 
 	# Période sélectionnée (jour/semaine/mois/personnalisée)
-	period = request.GET.get("p", "day")
-	period_label = "Aujourd'hui"
+	period = request.GET.get("p", "month")
+	period_label = "Ce mois"
 	custom_from = request.GET.get("from") or ""
 	custom_to = request.GET.get("to") or ""
 	if period == "day":
@@ -994,8 +994,8 @@ def dashboard(request):
 		end_period = timezone.make_aware(datetime.combine(exp_to + timedelta(days=1), time.min))
 		period_label = "Période personnalisée"
 	else:
-		start_period = start_day; end_period = now
-		period_label = "Aujourd'hui"
+		start_period = start_month; end_period = now
+		period_label = "Ce mois"
 
 	from collections import defaultdict
 
