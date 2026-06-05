@@ -4,18 +4,34 @@ Caisse enregistreuse Django pour coopérative. Gestion des ventes, clients, stoc
 
 ---
 
+## Aperçu
+
+### Tableau de bord — statistiques du mois, graphique jour par jour, alertes stock
+![Tableau de bord](docs/screenshots/01_dashboard.png)
+
+### Kiosk de vente — grille produits, overlay quantité +/−, panier temps réel
+![Kiosk vente](docs/screenshots/03_kiosk_panier.png)
+
+### Catalogue — stocks par catégorie, ajout rapide
+![Catalogue](docs/screenshots/05_catalogue.png)
+
+### Caisse — détail par billet/pièce, mouvements récents
+![Caisse](docs/screenshots/06_caisse.png)
+
+---
+
 ## Fonctionnalités
 
-- Kiosk de vente : grille produits par catégorie, overlay quantité +/− directement sur les cartes, recherche rapide
-- Gestion des paiements : espèces avec rendu monnaie automatique, chèque, autre, vente à crédit
-- Historique des ventes avec suppression individuelle (options : remise en stock + annulation caisse)
-- Catalogue produits avec gestion des stocks (ajout, ajustement ±)
-- Tableau de bord avec statistiques, graphiques et alertes stock bas
-- Gestion de caisse : fond, remises, mouvements, comptage par dénomination
-- Exports Excel (ventes, dettes, catalogue, mouvements caisse) et reçus PDF
-- Authentification à deux rôles : **Admin** et **Caissier**
-- Thème clair/sombre avec toggle dans la navbar (mémorisé)
-- Page Réglages utilisateurs simplifiée (sans Django admin)
+- **Kiosk de vente** : grille produits par catégorie, overlay quantité +/− directement sur les cartes, recherche rapide, filtre par catégorie
+- **Paiements** : espèces avec rendu monnaie automatique, chèque, autre, vente à crédit (dette)
+- **Historique des ventes** avec suppression individuelle (options : remise en stock + annulation caisse)
+- **Catalogue produits** avec gestion des stocks (ajout, ajustement ±, historique des mouvements)
+- **Tableau de bord** avec statistiques, graphique jour par jour sur le mois en cours, top produits, top clients, alertes stock bas
+- **Gestion de caisse** : fond de caisse, remises, mouvements, comptage par dénomination
+- **Exports Excel** (ventes, dettes, catalogue, mouvements caisse) et **reçus PDF**
+- **Authentification** à deux rôles : Admin et Caissier
+- **Thème clair/sombre** avec toggle dans la navbar (mémorisé)
+- **Gestion des utilisateurs** simplifiée (sans passer par le Django admin)
 
 ---
 

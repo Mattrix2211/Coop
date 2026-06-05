@@ -15,3 +15,16 @@ staticfiles/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs serveur
+*.log
+srv_err.log
+server_err.log
+server.log
+
+# Claude Code (local uniquement)
+.claude/settings.local.json
+.claude/launch.json
+
+# Scripts utilitaires de dev (non nécessaires en prod)
+docs/take_screenshots.py
