@@ -4,34 +4,19 @@
 {% block title %}Vente - Coop{% endblock %}
 {% block content %}
 <style>
-/* Overlay quantité */
-.product-card { position: relative; overflow: visible; }
-.card-qty-overlay {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(13,110,253,0.92); color: #fff;
-  display: none; align-items: center; justify-content: space-between;
-  padding: 4px 10px; border-radius: 0 0 12px 12px; gap: 6px; z-index: 2;
-}
-.card-qty-overlay.visible { display: flex; }
-.card-qty-btn {
-  background: rgba(255,255,255,0.25); border: none; color: #fff;
-  border-radius: 50%; width: 26px; height: 26px;
-  font-size: 1.1rem; font-weight: 700; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  line-height: 1; flex-shrink: 0; transition: background .15s;
-}
-.card-qty-btn:hover { background: rgba(255,255,255,0.45); }
-.card-qty-num { font-weight: 700; font-size: 1rem; min-width: 20px; text-align: center; flex: 1; }
-/* Stock badge */
+/* Styles locaux au kiosk (compléments non couverts par styles.css) */
 .pstock { font-size: .7rem; color: #6c757d; margin-top: 2px; }
 .pstock.low { color: #dc3545; font-weight: 600; }
-/* Animation tap */
-@keyframes cardTap { 0%{transform:scale(1)} 40%{transform:scale(0.93)} 100%{transform:scale(1)} }
-.product-card.card-tap { animation: cardTap 0.15s ease-out; }
+/* Animation tap carte — interruptible, ease-out-quart */
+@keyframes cardTap { 0%{transform:scale(1)} 40%{transform:scale(0.94)} 100%{transform:scale(1)} }
+.product-card.card-tap { animation: cardTap 0.18s cubic-bezier(0.25,1,0.5,1); }
 /* Combobox client */
 #customerCombo .list-group-item { font-size: .9rem; padding: .5rem .75rem; cursor: pointer; }
 #customerCombo .list-group-item:hover, #customerCombo .list-group-item.active { background: #0d6efd; color: #fff; border-color: #0d6efd; }
 #customerSearch.selected { font-weight: 600; }
+@media (prefers-reduced-motion: reduce) {
+  .product-card.card-tap { animation: none; }
+}
 </style>
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="m-0 d-flex align-items-center gap-2">Vente
