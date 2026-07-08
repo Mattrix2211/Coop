@@ -380,6 +380,10 @@
     for(const row of rows){
       const select = row.querySelector('select');
       if(select && select.value == String(productId)){
+        // Réactiver la ligne si elle était marquée DELETE/cachée
+        const delChk = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if(delChk && delChk.checked){ delChk.checked = false; row.style.display = ''; }
+        else if(row.style.display === 'none'){ row.style.display = ''; }
         const qty = row.querySelector('input[name$="-quantity"]');
         qty.value = (parseInt(qty.value||'0',10) || 0) + 1;
         cartQtyMap[productId] = parseInt(qty.value, 10);
@@ -436,6 +440,8 @@
   }
 
   grid?.addEventListener('click', (e)=>{
+    // Ignorer les clics sur l'overlay +/− (gérés par le listener dédié)
+    if(e.target.closest('.card-qty-overlay')) return;
     const card = e.target.closest('.product-card');
     if(!card) return;
     if(card.classList.contains('sold-out')) return;
@@ -619,11 +625,13 @@
   });
 
   // Boutons +/− directement sur les cartes produit
+  // capture:true → phase de capture, s'exécute AVANT le listener carte (bubble), stopImmediatePropagation bloque ce dernier
   document.getElementById('productGrid').addEventListener('click', (e)=>{
     const decBtn = e.target.closest('.card-qty-dec');
     const incBtn = e.target.closest('.card-qty-inc');
     if(!decBtn && !incBtn) return;
     e.stopPropagation();
+    e.stopImmediatePropagation(); // empêche le listener carte (même élément) de se déclencher
     const pid = (decBtn || incBtn).dataset.id;
     if(incBtn){
       addOrIncrease(pid, '', productPrices[pid] || '0');
@@ -639,7 +647,7 @@
           if(v <= 0){
             // supprimer la ligne
             const del = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-            if(del){ del.checked = true; row.style.display='none'; }
+            if(del){ del.checked = true; qty.value = 0; row.style.display='none'; }
             else { s.value=''; qty.value=''; const u=row.querySelector('input[name$="-unit_price"]'); if(u) u.value=''; row.style.display='none'; }
             cartQtyMap[pid] = 0;
           } else {
@@ -652,7 +660,7 @@
         }
       }
     }
-  });
+  }, { capture: true });
   // Bouton Vider le panier
   document.getElementById('clearCartBtn')?.addEventListener('click', ()=>{
     const rows = Array.from(document.querySelectorAll('#cartBody .item-row'));
