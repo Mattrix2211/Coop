@@ -15,6 +15,9 @@ Caisse enregistreuse Django pour coopérative. Gestion des ventes, clients, stoc
 ### Catalogue — stocks par catégorie, ajout rapide
 ![Catalogue](docs/screenshots/05_catalogue.png)
 
+### Clients — liste, fiche client, dettes
+![Clients](docs/screenshots/07_clients.png)
+
 ### Caisse — détail par billet/pièce, mouvements récents
 ![Caisse](docs/screenshots/06_caisse.png)
 
@@ -118,6 +121,6 @@ Connectez-vous en admin → menu utilisateur (haut droite) → **Réglages utili
 
 - **Backend** : Django 5.1, Python 3.13
 - **Base de données** : PostgreSQL (prod) / SQLite (dev)
-- **Frontend** : Bootstrap 5.3, vanilla JS
+- **Frontend** : Bootstrap 5.3, vanilla JS, [MK Design System v2.0](https://github.com/Mattrix2211/design-system) (palette Navy/Signal, Space Grotesk + Inter + JetBrains Mono)
 - **Exports** : openpyxl (Excel), ReportLab (PDF)
 - **Serveur** : Gunicorn + Whitenoise (fichiers statiques)
